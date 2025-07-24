@@ -39,4 +39,5 @@ const additionalInstructions = `
 10. Implement utility-first CSS approach
 11. Follow both Solid.js and Tailwind naming conventions
 12. Use JIT (Just-In-Time) mode for faster development
+13. Use npx soliduicli to add new ui components
     `;

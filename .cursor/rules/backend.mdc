@@ -1,0 +1,7 @@
+---
+description: The backend is a FastAPI python server.
+globs:
+alwaysApply: false
+---
+
+
