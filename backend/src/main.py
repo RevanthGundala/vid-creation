@@ -1,13 +1,19 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
-from api.v1.video import router as video_router
+from api.video import router as video_router
 import firebase_admin
 from firebase_admin import credentials, auth
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from api.auth import firebase_auth_dependency
+from api.auth import router as auth_router
+from src.api.middleware import logging_middleware
 
 app = FastAPI()
-app.include_router(video_router)
 
+app.middleware("http")(logging_middleware)
+
+app.include_router(video_router)
+app.include_router(auth_router)
 
 app.add_middleware(
        CORSMiddleware,
@@ -33,23 +39,7 @@ if not firebase_admin._apps:
     })
     firebase_admin.initialize_app(cred)
 
-def verify_firebase_token(id_token: str):
-    try:
-        decoded_token = auth.verify_id_token(id_token)
-        return decoded_token
-    except Exception as e:
-        return None
-
-def firebase_auth_dependency(request: Request):
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Missing or invalid Authorization header')
-    id_token = auth_header.split(' ')[1]
-    decoded_token = verify_firebase_token(id_token)
-    if not decoded_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid Firebase ID token')
-    return decoded_token
-
+# Test routes
 @app.get("/api/hello")
 def hello():
     return {"message": "Hello from the backend!"}
