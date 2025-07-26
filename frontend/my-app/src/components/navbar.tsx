@@ -5,13 +5,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuPortal
-} from './ui/dropdown-menu';
+} from '../components/ui/dropdown-menu';
 import {
   Dialog,
-  DialogContent
-} from './ui/dialog';
+  DialogContent,
+  DialogTitle
+} from '../components/ui/dialog';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
+import { Button } from '../components/ui/button';
+import { TextFieldTextArea } from '../components/ui/text-field';
 import { TbDotsVertical, TbUserCircle, TbLogout, TbCoin, TbMessage } from 'solid-icons/tb';
 
 export default function Navbar() {
@@ -39,8 +41,8 @@ export default function Navbar() {
 
       <Dialog open={feedbackOpen()} onOpenChange={setFeedbackOpen}>
         <DialogContent class="max-w-md w-full p-6 bg-white rounded-lg shadow-xl text-black">
-          <h2 class="text-xl font-bold mb-4">Send Feedback</h2>
-          <textarea class="w-full h-32 p-2 border border-gray-300 rounded mb-4" placeholder="Your feedback..." />
+          <DialogTitle class="text-xl font-bold mb-4">Send Feedback</DialogTitle>
+          <TextFieldTextArea class="w-full h-32 p-2 border border-gray-300 rounded mb-4" placeholder="Your feedback..." />
           <div class="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setFeedbackOpen(false)}>Cancel</Button>
             <Button variant="default" onClick={() => setFeedbackOpen(false)}>Send</Button>

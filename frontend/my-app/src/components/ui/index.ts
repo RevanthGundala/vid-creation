@@ -12,5 +12,5 @@ export { DropdownMenu } from "./dropdown-menu"
 export { Switch } from "./switch"
 export { Tooltip } from "./tooltip"
 export { Toast } from "./toast"
-export { ToastAction } from "./toast"
+
 export { ToastTitle } from "./toast"

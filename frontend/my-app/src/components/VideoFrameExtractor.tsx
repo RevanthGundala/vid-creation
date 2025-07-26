@@ -85,12 +85,12 @@ export default function VideoFrameExtractor(props: VideoFrameExtractorProps) {
       {framesQuery.isError && (
         <div class="text-center py-8 text-red-600">
           <p>Error: {framesQuery.error?.message || 'Failed to extract frames'}</p>
-          <button
+          <Button
             onClick={() => framesQuery.refetch()}
             class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -118,7 +118,7 @@ export default function VideoFrameExtractor(props: VideoFrameExtractorProps) {
                 <div class="absolute top-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
                   {index()}
                 </div>
-                <button
+                <Button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleDownloadFrame(index())
@@ -126,7 +126,7 @@ export default function VideoFrameExtractor(props: VideoFrameExtractorProps) {
                   class="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1 rounded hover:bg-blue-600"
                 >
                   ↓
-                </button>
+                </Button>
               </div>
             )}
           </For>

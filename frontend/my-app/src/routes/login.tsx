@@ -55,15 +55,12 @@ function Authentication() {
         />
       </div>
       <div class="container relative hidden h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-        <a
-          href="/examples/authentication"
-          class={cn(
-            buttonVariants({ variant: "ghost" }),
-            "absolute right-4 top-4 md:right-8 md:top-8"
-          )}
+        <Button
+          variant="ghost"
+          class="absolute right-4 top-4 md:right-8 md:top-8"
         >
           Login
-        </a>
+        </Button>
         <div class="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
           <div class="absolute inset-0 bg-zinc-900" />
           <div class="relative z-20 flex items-center text-lg font-medium">

@@ -1,7 +1,9 @@
-import { createSignal, onCleanup } from 'solid-js'
+
+import { createSignal, onCleanup, For } from 'solid-js'
+import { Button } from '../components/ui/button'
 
 interface TimelineProps {
-  videoUrl: string | null
+  videoUrls: string[]
   setCurrentTime: (time: number) => void
 }
 
@@ -9,6 +11,8 @@ export default function Timeline(props: TimelineProps) {
   let videoRef: HTMLVideoElement | undefined
   const [dragging, setDragging] = createSignal(false)
   const [progress, setProgress] = createSignal(0) // 0 to 1
+  const [arrangeMode, setArrangeMode] = createSignal(false)
+  const [currentVideoUrls, setCurrentVideoUrls] = createSignal(props.videoUrls)
   let duration = 0
 
   function handleMouseDown(e: MouseEvent) {
@@ -32,9 +36,8 @@ export default function Timeline(props: TimelineProps) {
   }
 
   function updateProgress(e: MouseEvent) {
-    const bar = document.getElementById('timeline-bar')
-    if (!bar) return
-    const rect = bar.getBoundingClientRect()
+    if (!videoRef) return
+    const rect = videoRef.getBoundingClientRect()
     let x = e.clientX - rect.left
     x = Math.max(0, Math.min(x, rect.width))
     const p = x / rect.width
@@ -55,40 +58,71 @@ export default function Timeline(props: TimelineProps) {
     window.removeEventListener('mouseup', handleMouseUp)
   })
 
+  function handleDragStart(e: DragEvent, index: number) {
+    e.dataTransfer?.setData('text/plain', index.toString())
+  }
+
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault() // Necessary to allow dropping
+  }
+
+  function handleDrop(e: DragEvent, dropIndex: number) {
+    const dragIndex = parseInt(e.dataTransfer?.getData('text/plain') || '-1')
+    if (dragIndex === -1 || dragIndex === dropIndex) return
+
+    const newUrls = [...currentVideoUrls()]
+    const [draggedItem] = newUrls.splice(dragIndex, 1)
+    newUrls.splice(dropIndex, 0, draggedItem)
+    setCurrentVideoUrls(newUrls)
+  }
+
   return (
     <div class="w-full max-w-4xl mt-6 flex flex-col items-center gap-2">
-      {/* Small video preview */}
-      <div class="flex justify-center w-full">
-        <video
-          ref={el => videoRef = el}
-          src={props.videoUrl ?? ''}
-          class="rounded shadow-md"
-          style={{ width: '120px', height: '68px', objectFit: 'cover' }}
-          muted
-          onLoadedMetadata={handleLoadedMetadata}
-        />
-      </div>
-      {/* Timeline bar with draggable handle */}
-      <div class="relative w-full h-8 flex items-center mt-2">
+      <Button onClick={() => setArrangeMode(!arrangeMode())}>
+        {arrangeMode() ? 'Done Arranging' : 'Arrange Videos'}
+      </Button>
+
+      {arrangeMode() ? (
+        <div class="flex flex-wrap justify-center gap-2 w-full">
+          <For each={currentVideoUrls()}>
+            {(url, index) => (
+              <div
+                draggable="true"
+                onDragStart={(e) => handleDragStart(e, index())}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index())}
+                class="relative rounded shadow-md cursor-grab"
+                style={{ width: '120px', height: '68px', overflow: 'hidden' }}
+              >
+                <video
+                  src={url}
+                  class="w-full h-full object-cover rounded"
+                  muted
+                />
+              </div>
+            )}
+          </For>
+        </div>
+      ) : (
         <div
-          id="timeline-bar"
-          class="w-full h-2 bg-gray-700 rounded-full cursor-pointer"
+          class="relative rounded shadow-md"
+          style={{ width: '120px', height: '68px' }}
           onMouseDown={handleMouseDown}
         >
-          {/* Progress bar */}
-          <div
-            class="h-2 bg-blue-500 rounded-full"
-            style={{ width: `${progress() * 100}%` }}
+          <video
+            ref={el => videoRef = el}
+            src={props.videoUrls[0] ?? ''}
+            class="w-full h-full object-cover rounded"
+            muted
+            onLoadedMetadata={handleLoadedMetadata}
           />
-          {/* Draggable handle as vertical rectangle */}
+          {/* Draggable handle as vertical rectangle over video */}
           <div
-            class="absolute top-1/2 -translate-y-1/2"
+            class="absolute top-0 bottom-0 w-1 bg-blue-400 rounded cursor-grab"
             style={{ left: `calc(${progress() * 100}% - 2px)` }}
-          >
-            <div class="w-1 h-8 bg-blue-400 rounded" />
-          </div>
+          />
         </div>
-      </div>
+      )}
     </div>
   )
 }

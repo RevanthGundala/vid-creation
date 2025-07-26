@@ -1,8 +1,9 @@
 import { createSignal } from 'solid-js'
-import { Button } from './ui/button'
+import { Button } from '../components/ui/button'
 import { generateVideo } from '../api'
 import { NUM_VIDEOS_TO_GENERATE } from '../constants'
 import { TbLoader } from 'solid-icons/tb'
+import { TextField, TextFieldInput } from '../components/ui/text-field'
 
 
 interface ChatBoxProps { 
@@ -32,19 +33,28 @@ export default function ChatBox({ setVideos }: ChatBoxProps) {
       <h1>ChatBox</h1>
       <div class="flex flex-col gap-4">
         <div class="flex flex-row gap-2">   
-            <select class="w-full p-2 rounded-md" value={model()} onChange={(e) => setModel(e.target.value)}>
-                <option value="gpt-4o">gpt-4o</option>
-                <option value="gpt-4o-mini">gpt-4o-mini</option>
-                <option value="claude-3-5-sonnet-20240620">claude-3-5-sonnet-20240620</option>
-                <option value="claude-3-5-sonnet-20240620">claude-3-5-sonnet-20240620</option>
-            </select>
+            <TextField>
+                <TextFieldInput
+                    type="text"
+                    value={model()}
+                    onChange={(e) => setModel(e.currentTarget.value)}
+                    class="w-full p-2 rounded-md"
+                />
+            </TextField>
         </div>
         <div class="flex flex-col gap-2">
           {messages().map((message) => (
             <div class="bg-gray-800 p-2 rounded-md">{message}</div>
           ))}
           <div class="flex flex-row gap-2">
-            <input type="text" class="w-full p-2 rounded-md" value={prompt()} onChange={(e) => setPrompt(e.target.value)} />
+            <TextField>
+                <TextFieldInput
+                    type="text"
+                    class="w-full p-2 rounded-md"
+                    value={prompt()}
+                    onChange={(e) => setPrompt(e.currentTarget.value)}
+                />
+            </TextField>
             <Button variant="default" onClick={handleSubmit}>Send</Button>
           </div>
         </div>

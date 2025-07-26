@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createSignal, For } from 'solid-js'
+import { Button } from '../../../components/ui/button'
+import { TextFieldInput } from '../../../components/ui/text-field'
 
-export const Route = createFileRoute('/_auth/dashboard')({
-  component: DashboardComponent,
+export const Route = createFileRoute('/_auth/projects/')({
+  component: ProjectsComponent,
 })
 
-function DashboardComponent() {
-  const [videos, setVideos] = createSignal([
+function ProjectsComponent() {
+  const [projects, setProjects] = createSignal([
     { id: '1', name: 'Project 1' },
     { id: '2', name: 'Project 2' },
     { id: '3', name: 'Project 3' },
@@ -16,9 +18,9 @@ function DashboardComponent() {
 
   const handleCreateProject = () => {
     if (newProjectName()) {
-      setVideos([
-        ...videos(),
-        { id: `${videos().length + 1}`, name: newProjectName() },
+      setProjects([
+        ...projects(),
+        { id: `${projects().length + 1}`, name: newProjectName() },
       ])
       setNewProjectName('')
       setIsCreating(false)
@@ -26,70 +28,71 @@ function DashboardComponent() {
   }
 
   const handleRenameProject = (id: string, newName: string) => {
-    setVideos(
-      videos().map(video => (video.id === id ? { ...video, name: newName } : video)),
+    setProjects(
+      projects().map(project => (project.id === id ? { ...project, name: newName } : project)),
     )
   }
 
   const handleDeleteProject = (id: string) => {
-    setVideos(videos().filter(video => video.id !== id))
+    setProjects(projects().filter(project => project.id !== id))
   }
 
   return (
     <div class="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white p-4">
       <h1 class="text-2xl mb-4">My Projects</h1>
-      <button
+      <Button
         onClick={() => setIsCreating(true)}
         class="mb-4 px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-semibold"
       >
         New Project
-      </button>
+      </Button>
 
       {isCreating() && (
         <div class="flex items-center space-x-2 mb-4">
-          <input
+          <TextFieldInput
             type="text"
             value={newProjectName()}
             onInput={e => setNewProjectName(e.currentTarget.value)}
             class="px-2 py-1 rounded bg-gray-700 text-white"
             placeholder="Project Name"
           />
-          <button
+          <Button
             onClick={handleCreateProject}
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
           >
             Create
-          </button>
+          </Button>
         </div>
       )}
 
       <ul class="space-y-2">
-        <For each={videos()}>
-          {video => (
+        <For each={projects()}>
+          {project => (
             <li class="flex items-center space-x-2">
               <Link
-                to={`/create/${video.id}`}
+                to="/projects/projects/$projectId"
+                params={{ projectId: project.id }}
                 class="text-blue-400 hover:underline"
               >
-                {video.name}
+                {project.name}
               </Link>
-              <button
+              <Button
                 onClick={() => {
-                  const newName = prompt('Enter new name', video.name)
+                  const newName = prompt('Enter new name', project.name)
                   if (newName) {
-                    handleRenameProject(video.id, newName)
+                    handleRenameProject(project.id, newName)
                   }
                 }}
                 class="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-white font-semibold"
               >
                 Rename
-              </button>
-              <button
-                onClick={() => handleDeleteProject(video.id)}
+              </Button>
+              <Button
+                onClick={() => handleDeleteProject(project.id)}
                 class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-white font-semibold"
               >
                 Delete
-              </button>
+              </Button>
             </li>
           )}
         </For>

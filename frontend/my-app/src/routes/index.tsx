@@ -23,7 +23,7 @@ function LandingPage() {
       <section class="flex flex-col items-center justify-center flex-1 py-24 bg-gradient-to-b from-[#282c34] to-[#1a1d22]">
         <h1 class="text-4xl md:text-6xl font-bold mb-6 text-center">Welcome to Vid Creation</h1>
         <p class="text-lg md:text-2xl mb-8 text-center max-w-xl">Create, share, and discover amazing AI-generated videos.</p>
-        <Link to="/create" class="mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold">Go to my projects</Link>
+        <Link to={user() ? "/projects" : "/login"} class="mb-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold">Go to my projects</Link>
       </section>
 
       {/* Video Grid Section */}

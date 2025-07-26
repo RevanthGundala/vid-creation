@@ -29,19 +29,19 @@ export default function FrameExtractionExample() {
         </p>
         
         <div class="flex gap-4 justify-center mb-6">
-          <button
+          <Button
             onClick={loadSampleVideo}
             class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
           >
             Load Sample Video
-          </button>
+          </Button>
           
-          <button
+          <Button
             onClick={() => setVideoUrl(null)}
             class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-semibold"
           >
             Clear Video
-          </button>
+          </Button>
         </div>
       </div>
 

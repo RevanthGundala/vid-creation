@@ -4,8 +4,8 @@ node_modules
 dist
 dist-ssr
 *.local
-env.*
+.env.*
 .nitro
 .tanstack
-env.development
-env.production
+.env.development
+.env.production

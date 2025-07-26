@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
 import VideoFrameExtractor from './VideoFrameExtractor'
+import { Button } from '../components/ui/button'
 
 export interface ToolbarProps {
   videoUrl: string | null
@@ -37,24 +38,24 @@ export default function Toolbar(props: ToolbarProps) {
     <div class="w-full max-w-4xl">
       {/* Toolbar */}
       <div class="flex items-center gap-4 mb-4 bg-gray-700 p-2 rounded-md">
-        <button
+        <Button
           onClick={() => setActiveTool(Tool.DEFAULT)}
           class={`px-4 py-2 rounded ${activeTool() === Tool.DEFAULT ? 'bg-blue-600' : 'bg-gray-600'}`}
         >
           Default
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setActiveTool(Tool.DRAW)}
           class={`px-4 py-2 rounded ${activeTool() === Tool.DRAW ? 'bg-blue-600' : 'bg-gray-600'}`}
         >
           Draw
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setActiveTool(Tool.SELECT)}
           class={`px-4 py-2 rounded ${activeTool() === Tool.SELECT ? 'bg-blue-600' : 'bg-gray-600'}`}
         >
           Select 👆
-        </button>
+        </Button>
         <div class="ml-auto">
           <label class="text-sm font-semibold mr-2">Upload MP4:</label>
           <input
