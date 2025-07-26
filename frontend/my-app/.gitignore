@@ -9,3 +9,4 @@ dist-ssr
 .tanstack
 .env.development
 .env.production
+public/splats
