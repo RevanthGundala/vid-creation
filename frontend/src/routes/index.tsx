@@ -43,11 +43,25 @@ const BoxLetter = ({ letter, position }: { letter: string, position: [number, nu
 
   const getLetterShape = (letter: string) => {
     const shapes = {
-      N: [
+      H: [
         [1,0,0,0,1],
-        [1,1,0,0,1],
+        [1,0,0,0,1],
+        [1,1,1,1,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+      ],
+      O: [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
+      M: [
+        [1,0,0,0,1],
+        [1,1,0,1,1],
         [1,0,1,0,1],
-        [1,0,0,1,1],
+        [1,0,0,0,1],
         [1,0,0,0,1],
       ],
       E: [
@@ -56,6 +70,13 @@ const BoxLetter = ({ letter, position }: { letter: string, position: [number, nu
         [1,1,0],
         [1,0,0],
         [1,1,1],
+      ],
+      N: [
+        [1,0,0,0,1],
+        [1,1,0,0,1],
+        [1,0,1,0,1],
+        [1,0,0,1,1],
+        [1,0,0,0,1],
       ],
       X: [
         [1,0,0,0,1],
@@ -82,7 +103,49 @@ const BoxLetter = ({ letter, position }: { letter: string, position: [number, nu
       {letterShape.map((row: number[], i: number) =>
         row.map((cell: number, j: number) => {
           if (cell) {
-            let xOffset = j * 0.5 - (letter === 'T' ? 1 : letter === 'E' ? 0.5 : letter === 'X' || letter === 'N' ? 1 : 0.75)
+            let xOffset = j * 0.5 - (letter === 'T' ? 1 : letter === 'E' ? 0.5 : letter === 'X' || letter === 'N' ? 1 : letter === 'H' || letter === 'O' || letter === 'M' ? 1 : 0.75)
+            
+            if (letter === 'H') {
+              if (j === 0) {
+                xOffset = -1;
+              } else if (j === 1) {
+                xOffset = -0.5;
+              } else if (j === 2) {
+                xOffset = 0;
+              } else if (j === 3) {
+                xOffset = 0.5;
+              } else if (j === 4) {
+                xOffset = 1;
+              }
+            }
+            
+            if (letter === 'O') {
+              if (j === 0) {
+                xOffset = -1;
+              } else if (j === 1) {
+                xOffset = -0.5;
+              } else if (j === 2) {
+                xOffset = 0;
+              } else if (j === 3) {
+                xOffset = 0.5;
+              } else if (j === 4) {
+                xOffset = 1;
+              }
+            }
+            
+            if (letter === 'M') {
+              if (j === 0) {
+                xOffset = -1;
+              } else if (j === 1) {
+                xOffset = -0.5;
+              } else if (j === 2) {
+                xOffset = 0;
+              } else if (j === 3) {
+                xOffset = 0.5;
+              } else if (j === 4) {
+                xOffset = 1;
+              }
+            }
             
             if (letter === 'N') {
               if (j === 0) {
@@ -165,10 +228,10 @@ const ClickableTextGroup = () => {
       )}
       
       {/* Text letters */}
-      <BoxLetter letter="N" position={[-3.75, 0, 0]} />
-      <BoxLetter letter="E" position={[-1.25, 0, 0]} />
-      <BoxLetter letter="X" position={[1.25, 0, 0]} />
-      <BoxLetter letter="T" position={[3.75, 0, 0]} />
+      <BoxLetter letter="H" position={[-6, 0, 0]} />
+      <BoxLetter letter="O" position={[-2, 0, 0]} />
+      <BoxLetter letter="M" position={[2, 0, 0]} />
+      <BoxLetter letter="E" position={[6, 0, 0]} />
     </group>
   )
 }
@@ -176,7 +239,18 @@ const ClickableTextGroup = () => {
 const Scene = () => {
   const orbitControlsRef = useRef<typeof OrbitControls | null>(null)
   const [isMobileDevice, setIsMobileDevice] = useState(false)
+  const [environmentIndex, setEnvironmentIndex] = useState<number>(0)
+  const environments = [
+    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dither_it_M3_Drone_Shot_equirectangular-jpg_San_Francisco_Big_City_1287677938_12251179%20(1)-NY2qcmpjkyG6rDp1cPGIdX0bHk3hMR.jpg",
+    "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dither_it_M3_Drone_Shot_equirectangular-jpg_San_Francisco_Big_City_1287677938_12251179%20(1)-NY2qcmpjkyG6rDp1cPGIdX0bHk3hMR.jpg",
+  ]
 
+  useEffect(() => {
+    setInterval(() => {
+      // Loop through environments and set the environment
+      setEnvironmentIndex((prevIndex) => (prevIndex + 1) % environments.length)
+    }, 5000)
+  }, [])
   useEffect(() => {
     setIsMobileDevice(isMobile())
   }, [])
@@ -198,10 +272,7 @@ const Scene = () => {
       <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
       
       <Environment 
-        files={isMobileDevice 
-          ? "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/download3-7FArHVIJTFszlXm2045mQDPzsZqAyo.jpg"
-          : "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dither_it_M3_Drone_Shot_equirectangular-jpg_San_Francisco_Big_City_1287677938_12251179%20(1)-NY2qcmpjkyG6rDp1cPGIdX0bHk3hMR.jpg"
-        }
+        files={environments[environmentIndex]}
         background
       />
     </>
