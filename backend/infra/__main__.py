@@ -24,23 +24,6 @@ firestore_db = gcp.firestore.Database(
     opts=pulumi.ResourceOptions(depends_on=[firestore_api]),
 )
 
-# Firestore collections are created implicitly by writing documents to them.
-# We'll document the schemas here for reference.
-# VideoMetadata schema:
-#   - video_id (string, doc id)
-#   - name (string)
-#   - user_id (string)
-#   - description (string)
-#   - status (string: pending | uploaded)
-#   - S3URL (string)
-#   - created_at (timestamp)
-#   - modified_at (timestamp)
-
-# users schema:
-#   - user_id (string, doc id)
-#   - video_id (array of strings)
-#   - credits (int)
-
 # Create a GCS bucket for video blobs
 video_bucket = gcp.storage.Bucket(
     "video-blobs-bucket",
