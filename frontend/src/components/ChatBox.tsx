@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { Textarea } from './ui/textarea'
 import { Button } from './ui/button'
 
-export default function ChatBox() {
+interface ChatBoxProps {
+  onSubmit: (prompt: string) => void
+}
+
+export default function ChatBox({ onSubmit }: ChatBoxProps) {
   const [messages, setMessages] = useState<string[]>([])
   const [model, setModel] = useState<string>('gpt-4o')
   const [prompt, setPrompt] = useState<string>('')
@@ -11,7 +15,7 @@ export default function ChatBox() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setPrompt('')
-    console.log(prompt)
+    onSubmit(prompt)
   }
 
   // Submit on enter

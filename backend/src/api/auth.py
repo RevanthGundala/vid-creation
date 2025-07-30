@@ -1,9 +1,7 @@
-from fastapi import Request, HTTPException, status
-from utils.firebase import verify_firebase_token
-from fastapi import APIRouter
-from database.firestore import get_firestore_client
-from database.models import User
-import uuid
+from fastapi import Request, HTTPException, status, APIRouter
+from src.database.firebase import verify_firebase_token
+from src.database.firebase import get_firestore_client
+from src.schemas.user import User
 
 router = APIRouter()
 

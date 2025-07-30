@@ -1,19 +1,23 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
-from api.video import router as video_router
+from src.api.asset import router as asset_router
+from src.api.webhooks import router as webhook_router
 import firebase_admin
 from firebase_admin import credentials, auth
 import os
 from fastapi.middleware.cors import CORSMiddleware
-from api.auth import firebase_auth_dependency
-from api.auth import router as auth_router
+from src.api.auth import router as auth_router
 from src.api.middleware import logging_middleware
+import dotenv
+from src.database.firebase import firebase_auth_dependency
 
+dotenv.load_dotenv()
 app = FastAPI()
 
 app.middleware("http")(logging_middleware)
 
-app.include_router(video_router)
 app.include_router(auth_router)
+app.include_router(asset_router)
+app.include_router(webhook_router)
 
 app.add_middleware(
        CORSMiddleware,
@@ -23,21 +27,28 @@ app.add_middleware(
        allow_headers=["*"],
    )
 
-# Initialize Firebase Admin SDK
-if not firebase_admin._apps:
-    cred = credentials.Certificate({
-        "type": os.getenv("FIREBASE_TYPE", "service_account"),
-        "project_id": os.getenv("FIREBASE_PROJECT_ID", "your-project-id"),
-        "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID", "your-private-key-id"),
-        "private_key": os.getenv("FIREBASE_PRIVATE_KEY", "your-private-key").replace('\\n', '\n'),
-        "client_email": os.getenv("FIREBASE_CLIENT_EMAIL", "your-client-email"),
-        "client_id": os.getenv("FIREBASE_CLIENT_ID", "your-client-id"),
-        "auth_uri": os.getenv("FIREBASE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth"),
-        "token_uri": os.getenv("FIREBASE_TOKEN_URI", "https://oauth2.googleapis.com/token"),
-        "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_X509_CERT_URL", "https://www.googleapis.com/oauth2/v1/certs"),
-        "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL", "your-client-x509-cert-url")
-    })
+try:
+    cert = { 
+        "type": os.getenv("FIREBASE_TYPE"),
+        "project_id": os.getenv("FIREBASE_PROJECT_ID"),
+        "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+        "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+        "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+        "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+        "auth_uri": os.getenv("FIREBASE_AUTH_URI"),
+        "token_uri": os.getenv("FIREBASE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_X509_CERT_URL")
+    }
+    for name, value in cert.items():
+        print(f"{name}: {value}")
+    cred = credentials.Certificate(cert)
     firebase_admin.initialize_app(cred)
+    print("Firebase Admin SDK initialized successfully")
+except Exception as e:
+    print(f"Failed to initialize Firebase: {e}")
+    print("Running in development mode without Firebase")
+
 
 # Test routes
 @app.get("/api/hello")

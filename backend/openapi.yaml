@@ -1,0 +1,584 @@
+openapi: 3.1.0
+info:
+  title: FastAPI
+  version: 0.1.0
+paths:
+  /api/video:
+    post:
+      summary: Generate Video
+      operationId: generate_video_api_video_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                title: Response Generate Video Api Video Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/video-metadata:
+    post:
+      summary: Create Video Metadata
+      operationId: create_video_metadata_api_video_metadata_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VideoMetadataCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoMetadata'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/generate-upload-url:
+    post:
+      summary: Generate Upload Url
+      operationId: generate_upload_url_api_generate_upload_url_post
+      parameters:
+      - name: filename
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /auth/google:
+    post:
+      summary: Google Auth Callback
+      operationId: google_auth_callback_auth_google_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/generate-3d-asset:
+    post:
+      summary: Generate 3D Asset
+      description: 'Generate a 3D asset based on a text prompt.
+
+
+        This endpoint creates a new job for 3D asset generation and returns
+
+        a job ID that can be used to track the generation progress.'
+      operationId: generate_3d_asset_api_generate_3d_asset_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Generate3DAssetRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Generate3DAssetResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/jobs/{job_id}:
+    get:
+      summary: Get Job Status
+      description: Get the status of a specific job.
+      operationId: get_job_status_api_jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/projects/{project_id}/jobs:
+    get:
+      summary: Get Project Jobs
+      description: Get all jobs for a specific project.
+      operationId: get_project_jobs_api_projects__project_id__jobs_get
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobStatus'
+                title: Response Get Project Jobs Api Projects  Project Id  Jobs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/jobs:
+    get:
+      summary: Get User Jobs
+      description: Get all jobs for the authenticated user.
+      operationId: get_user_jobs_api_jobs_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobStatus'
+                title: Response Get User Jobs Api Jobs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: Create Job
+      description: Create a new job of any supported type.
+      operationId: create_job_api_jobs_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/assets/{job_id}:
+    get:
+      summary: Get Ksplat Asset
+      description: Serve a .ksplat file for a specific job.
+      operationId: get_ksplat_asset_api_assets__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/webhooks/{job_id}/stream:
+    get:
+      summary: Stream Job Updates
+      description: 'Server-Sent Events (SSE) endpoint for streaming job updates.
+
+        The frontend can connect to this endpoint to receive real-time updates.'
+      operationId: stream_job_updates_api_webhooks__job_id__stream_get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/webhooks/test:
+    post:
+      summary: Test Webhook
+      description: Test endpoint for webhook notifications.
+      operationId: test_webhook_api_webhooks_test_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/hello:
+    get:
+      summary: Hello
+      operationId: hello_api_hello_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/protected:
+    get:
+      summary: Protected Route
+      operationId: protected_route_api_protected_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /mock-upload/{blob_name}:
+    put:
+      summary: Mock Upload
+      description: Mock endpoint to handle file uploads in development mode.
+      operationId: mock_upload_mock_upload__blob_name__put
+      parameters:
+      - name: blob_name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Blob Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    Generate3DAssetRequest:
+      properties:
+        prompt:
+          type: string
+          maxLength: 1000
+          minLength: 1
+          title: Prompt
+          description: Text prompt for 3D asset generation
+        webhook_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Webhook Url
+          description: Optional webhook URL for job status updates
+      type: object
+      required:
+      - prompt
+      title: Generate3DAssetRequest
+    Generate3DAssetResponse:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+          description: Unique identifier for the generated project
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          title: Status
+          description: Current status of the asset generation
+      type: object
+      required:
+      - job_id
+      - status
+      title: Generate3DAssetResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    JobCreate:
+      properties:
+        job_type:
+          type: string
+          enum:
+          - 3d
+          - video
+          title: Job Type
+          description: Type of job to create
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Job parameters
+        webhook_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Webhook Url
+          description: Optional webhook URL for notifications
+      type: object
+      required:
+      - job_type
+      - parameters
+      title: JobCreate
+    JobStatus:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+          description: Unique job identifier
+        project_id:
+          type: string
+          title: Project Id
+          description: Project ID that the job is associated with
+        user_id:
+          type: string
+          title: User Id
+          description: User who created the job
+        job_type:
+          type: string
+          enum:
+          - 3d
+          - video
+          title: Job Type
+          description: Type of job
+        status:
+          type: string
+          enum:
+          - queued
+          - processing
+          - completed
+          - failed
+          title: Status
+          description: Current job status
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Job creation timestamp
+        modified_at:
+          type: string
+          format: date-time
+          title: Modified At
+          description: Last update timestamp
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+          description: When processing started
+        completed_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Completed At
+          description: When processing completed
+        progress:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Progress
+          description: Progress percentage (0-100)
+        result:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Result
+          description: Job result data
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+          description: Error message if failed
+        webhook_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Webhook Url
+          description: Webhook URL for notifications
+      type: object
+      required:
+      - job_id
+      - project_id
+      - user_id
+      - job_type
+      - status
+      - created_at
+      - modified_at
+      title: JobStatus
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VideoMetadata:
+      properties:
+        video_id:
+          type: string
+          title: Video Id
+        user_id:
+          type: string
+          title: User Id
+        name:
+          type: string
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+        S3URL:
+          type: string
+          title: S3Url
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - video_id
+      - user_id
+      - name
+      - status
+      - S3URL
+      - created_at
+      title: VideoMetadata
+    VideoMetadataCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+        user_id:
+          type: string
+          title: User Id
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+        S3URL:
+          type: string
+          title: S3Url
+      type: object
+      required:
+      - name
+      - user_id
+      - status
+      - S3URL
+      title: VideoMetadataCreate
+    VideoRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+      type: object
+      required:
+      - prompt
+      title: VideoRequest

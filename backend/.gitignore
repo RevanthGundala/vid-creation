@@ -1,2 +1,4 @@
 .env.development
 .venv/*
+assets/
+.env.production

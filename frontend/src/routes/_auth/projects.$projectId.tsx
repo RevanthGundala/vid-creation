@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useRef } from 'react'
-import { useGenerate3dAsset } from '../../hooks/3d'
+import { use3dAsset } from '../../hooks'
 import { toast } from 'sonner'
 import { Editor } from '@/components/editor'
 import ChatBox from '@/components/ChatBox'
@@ -29,11 +29,24 @@ function ProjectComponent() {
   const [prompt, setPrompt] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [asset, setAsset] = useState<any | null>(null)
+
+  const { generate3dAsset } = use3dAsset({
+    onSuccess: (data) => {
+      console.log(data)
+    },
+    onError: (error) => {
+      console.error(error)
+    }
+  })
   
   useEffect(() => {
     const project = fetchProject(params.projectId)
     setProject(project)
   }, [params.projectId])
+
+  const handleSubmit = (prompt: string) => {
+    generate3dAsset({ prompt })
+  }
 
   return (
     <div className="relative min-h-screen bg-[#282c34] text-white">
@@ -42,7 +55,7 @@ function ProjectComponent() {
       
       {/* ChatBox positioned as overlay */}
       <div className="absolute bottom-36 left-0 right-0 flex justify-center z-50">
-        <ChatBox />
+        <ChatBox onSubmit={handleSubmit} />
       </div>
     </div>
   )

@@ -1,21 +1,17 @@
-"""A Python Pulumi program"""
-
 import pulumi
 import pulumi_gcp as gcp
+from src.config import config
 
-# Example config variables (replace with your actual values or use pulumi.Config)
-project = "example-gcp-project"
-region = "us-east1"
-bucket_name = "example-video-blobs-bucket"
+project = config.gcp_project_id
+region = config.gcp_region
+bucket_name = config.gcp_bucket_name
 
-# Enable Firestore API
 firestore_api = gcp.projects.Service(
     "firestore-api",
     service="firestore.googleapis.com",
     disable_on_destroy=False,
 )
 
-# Create Firestore database (Native mode)
 firestore_db = gcp.firestore.Database(
     "firestore-db",
     project=project,
@@ -24,7 +20,6 @@ firestore_db = gcp.firestore.Database(
     opts=pulumi.ResourceOptions(depends_on=[firestore_api]),
 )
 
-# Create a GCS bucket for video blobs
 video_bucket = gcp.storage.Bucket(
     "video-blobs-bucket",
     name=bucket_name,

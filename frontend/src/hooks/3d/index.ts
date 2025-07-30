@@ -1,1 +1,0 @@
-export { useGenerate3dAsset } from "./use-3d-asset";
