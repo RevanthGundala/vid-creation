@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { $api } from "./index";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { $api, fetchClient } from "./index";
 import { toast } from "sonner";
 
 interface JobStatus {
@@ -35,36 +35,56 @@ export function useJobStatus({
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasShownError = useRef(false);
+  
+  // Store callbacks in refs to prevent infinite loops
+  const onStatusChangeRef = useRef(onStatusChange);
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    onStatusChangeRef.current = onStatusChange;
+    onCompleteRef.current = onComplete;
+    onErrorRef.current = onError;
+  }, [onStatusChange, onComplete, onError]);
 
   const fetchJobStatus = useCallback(async () => {
     try {
-      const response = await $api.get(`/api/jobs/${jobId}`);
+      const response = await fetchClient.GET(`/api/jobs/{job_id}`, {
+        params: { path: { job_id: jobId } }
+      });
       const status = response.data as JobStatus;
       
       setJobStatus(status);
       setError(null);
-      onStatusChange?.(status);
+      hasShownError.current = false; // Reset error flag on success
+      onStatusChangeRef.current?.(status);
 
       // Handle completion
-      if (status.status === "completed" && onComplete) {
-        onComplete(status.result);
+      if (status.status === "completed" && onCompleteRef.current) {
+        onCompleteRef.current(status.result);
       }
 
       // Handle errors
-      if (status.status === "failed" && onError) {
-        onError(status.error || "Job failed");
+      if (status.status === "failed" && onErrorRef.current) {
+        onErrorRef.current(status.error || "Job failed");
       }
 
       return status;
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || "Failed to fetch job status";
       setError(errorMessage);
-      toast.error(errorMessage);
+      // Only show toast once per error
+      if (!hasShownError.current) {
+        toast.error(errorMessage);
+        hasShownError.current = true;
+      }
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [jobId, onStatusChange, onComplete, onError]);
+  }, [jobId]);
 
   // Initial fetch
   useEffect(() => {
@@ -87,7 +107,7 @@ export function useJobStatus({
       return;
     }
 
-    const eventSource = new EventSource(`/api/webhooks/${jobId}/stream`);
+    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/webhooks/${jobId}/stream`);
     
     eventSource.onmessage = (event) => {
       try {
@@ -126,7 +146,9 @@ export function useUserJobs(limit: number = 50) {
 
   const fetchJobs = useCallback(async () => {
     try {
-      const response = await $api.get(`/api/jobs?limit=${limit}`);
+      const response = await fetchClient.GET(`/api/jobs`, {
+        params: { query: { limit: limit } }
+      });
       setJobs(response.data as JobStatus[]);
       setError(null);
     } catch (err: any) {

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { GalleryVerticalEnd } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { InferOutput } from "valibot"
 import { email, object, string, pipe, safeParse } from "valibot"
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { toast } from 'sonner';
 import { auth } from '@/utils/firebase';
 
@@ -24,26 +24,28 @@ export const Route = createFileRoute('/login')({
 
 
 function Authentication() {
-  // const { user, signOut } = useAuth();
-  // const testProtectedEndpoint = async () => {
-  //   const user = auth.currentUser;
-  //   if (!user) {
-  //     alert("You must be logged in to test the protected endpoint.");
-  //     return;
-  //   }
-  //   const idToken = await user.getIdToken();
-  //   try {
-  //     const response = await fetch("http://localhost:8000/api/protected", {
-  //       headers: { Authorization: `Bearer ${idToken}` },
-  //     });
-  //     if (!response.ok) throw new Error("Unauthorized or error");
-  //     const data = await response.json();
-  //     alert("Protected endpoint response: " + JSON.stringify(data));
-  //   } catch (err) {
-  //     alert("Error: " + err);
-  //   }
-  // };
-    return (
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Handle redirect result when component mounts
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          console.log("Redirect result:", result);
+          toast.success("Successfully signed in!");
+          navigate({ to: "/projects" });
+        }
+      } catch (error: any) {
+        console.error("Redirect result error:", error);
+        toast.error("Failed to complete sign in");
+      }
+    };
+
+    handleRedirectResult();
+  }, [navigate]);
+
+  return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="#" className="flex items-center gap-2 self-center font-medium">
@@ -70,6 +72,10 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -92,11 +98,95 @@ export function LoginForm({
     // If validation passes, result.output contains the validated data
     const validatedData: AuthForm = result.output;
     console.log("Validated data:", validatedData);
-    
-    // Now you can safely use the validated data
-    // e.g., call your authentication function
-    // await signIn(validatedData.email, validatedData.password);
+    try { 
+      const result = await signInWithEmailAndPassword(auth, validatedData.email, validatedData.password);
+      setIsSigningIn(true);
+      if (result.user) {
+        navigate({ to: "/projects" });
+      } else {
+        throw new Error("Failed to sign in with email and password");
+      }
+    } catch (error: any) {
+      console.error("Sign-in error:", error);
+      
+      // Check if user doesn't exist and automatically create account
+      if (error.code === 'auth/user-not-found') {
+        toast.info("No account found. Creating a new account...");
+        
+        try {
+          const createResult = await createUserWithEmailAndPassword(
+            auth, 
+            validatedData.email, 
+            validatedData.password
+          );
+          
+          if (createResult.user) {
+            toast.success("Account created and signed in successfully!");
+            navigate({ to: "/projects" });
+          }
+        } catch (createError: any) {
+          console.error("Account creation error:", createError);
+          
+          // Handle specific Firebase auth errors
+          if (createError.code === 'auth/weak-password') {
+            toast.error("Password should be at least 6 characters long");
+          } else if (createError.code === 'auth/email-already-in-use') {
+            toast.error("An account with this email already exists");
+          } else if (createError.code === 'auth/invalid-email') {
+            toast.error("Please enter a valid email address");
+          } else if (createError.code === 'auth/operation-not-allowed') {
+            toast.error("Email/password accounts are not enabled. Please contact support.");
+          } else {
+            toast.error("Failed to create account. Please try again.");
+          }
+        }
+      } else if (error.code === 'auth/wrong-password') {
+        toast.error("Incorrect password. Please try again.");
+      } else if (error.code === 'auth/invalid-email') {
+        toast.error("Please enter a valid email address");
+      } else if (error.code === 'auth/too-many-requests') {
+        toast.error("Too many failed attempts. Please try again later.");
+      } else if (error.code === 'auth/user-disabled') {
+        toast.error("This account has been disabled. Please contact support.");
+      } else {
+        toast.error("Failed to sign in. Please try again.");
+      }
+      
+      setIsSigningIn(false);
+    }
   }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+    
+    setIsResetting(true);
+    
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+      toast.success("Password reset email sent! Check your inbox.");
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      
+      if (error.code === 'auth/user-not-found') {
+        toast.error("No account found with this email address");
+      } else if (error.code === 'auth/invalid-email') {
+        toast.error("Please enter a valid email address");
+      } else if (error.code === 'auth/too-many-requests') {
+        toast.error("Too many requests. Please try again later.");
+      } else {
+        toast.error("Failed to send reset email. Please try again.");
+      }
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -111,29 +201,15 @@ export function LoginForm({
       provider.addScope('email');
       provider.addScope('profile');
       
-      const result = await signInWithPopup(auth, provider);
+      // Use redirect instead of popup for better emulator compatibility
+      await signInWithRedirect(auth, provider);
       
-      if (result.user) {
-        console.log("User:", result.user);
-        toast.success("Successfully signed in!");
-        
-        // Wait for auth state to be fully updated
-        await new Promise(resolve => {
-          const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-              unsubscribe();
-              resolve(user);
-            }
-          });
-        });
-        
-        navigate({ to: "/projects" });
-      } else {
-        toast.error("Failed to sign in with Google");
-      }
+      // Note: The redirect will happen automatically, and the result will be handled
+      // in the component's useEffect or when the page loads back
     } catch (error: any) {
       console.error("Sign-in error:", error);
       toast.error("Failed to sign in with Google");
+      setIsSigningIn(false);
     }
   }
 
@@ -141,7 +217,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Welcome</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-6">
@@ -189,24 +265,65 @@ export function LoginForm({
             <div className="grid gap-3">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
                   className="ml-auto text-sm underline-offset-4 hover:underline"
                 >
                   Forgot your password?
-                </a>
+                </button>
               </div>
-              <Input id="password" name="password" type="password" required />
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  name="password" 
+                  type={showPassword ? "text" : "password"} 
+                  required 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  {!showPassword ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                      <line x1="2" x2="22" y1="2" y2="22" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full">
               Login
             </Button>
-            <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Sign up
-              </a>
-            </div>
           </form>
         </CardContent>
       </Card>
@@ -214,6 +331,86 @@ export function LoginForm({
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in-0 duration-200">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md animate-in slide-in-from-bottom-4 zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Reset Password</h2>
+              <button
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail('');
+                }}
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email Address</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetEmail('');
+                  }}
+                  className="flex-1 transition-all duration-200 hover:scale-105"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isResetting}
+                  className="flex-1 transition-all duration-200 hover:scale-105"
+                >
+                  {isResetting ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <span className="animate-pulse">Sending...</span>
+                    </div>
+                  ) : (
+                    <span className="transition-all duration-200">Send Reset Link</span>
+                  )}
+                </Button>
+              </div>
+            </form>
+            
+            <p className="text-sm text-gray-600 mt-4">
+              We'll send you a link to reset your password. Check your email inbox after submitting.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

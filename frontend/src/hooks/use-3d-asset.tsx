@@ -21,8 +21,8 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
     const generate3dAssetMutation = $api.useMutation("post", "/api/generate-3d-asset", {
         onSuccess: (data: Generate3DAssetResponse) => {
             console.log("Job created:", data);
-            // Use project_id for now until we regenerate types
-            setCurrentJobId(data.project_id);
+            // The backend returns job_id, not project_id
+            setCurrentJobId(data.job_id);
             options?.onSuccess?.(data);
             toast.success("3D asset generation started!");
         },
@@ -51,16 +51,21 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
         },
     });
 
-    const generate3dAsset = async ({ prompt }: Generate3DAssetRequest) => {
+    const generate3dAsset = async ({ prompt, project_id }: Generate3DAssetRequest) => {
         try {
             if (!prompt) {
                 toast.error("Please provide a prompt");
                 return;
             }
 
+            if (!project_id) {
+                throw new Error("Project ID is required");
+            }
+
             generate3dAssetMutation.mutate({
                 body: {
                     prompt,
+                    project_id,
                 },
             });
         } catch (error) {
@@ -71,8 +76,8 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
 
     const downloadAsset = async (jobId: string) => {
         try {
-            // For now, use the old endpoint structure until we regenerate types
-            const response = await fetch(`/api/assets/${jobId}/ksplat`);
+            // Use the correct endpoint structure
+            const response = await fetch(`/api/assets/${jobId}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

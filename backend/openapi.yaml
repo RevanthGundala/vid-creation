@@ -3,76 +3,6 @@ info:
   title: FastAPI
   version: 0.1.0
 paths:
-  /api/video:
-    post:
-      summary: Generate Video
-      operationId: generate_video_api_video_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VideoRequest'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: string
-                title: Response Generate Video Api Video Post
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/video-metadata:
-    post:
-      summary: Create Video Metadata
-      operationId: create_video_metadata_api_video_metadata_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/VideoMetadataCreate'
-        required: true
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VideoMetadata'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/generate-upload-url:
-    post:
-      summary: Generate Upload Url
-      operationId: generate_upload_url_api_generate_upload_url_post
-      parameters:
-      - name: filename
-        in: query
-        required: true
-        schema:
-          type: string
-          title: Filename
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /auth/google:
     post:
       summary: Google Auth Callback
@@ -93,12 +23,19 @@ paths:
 
         a job ID that can be used to track the generation progress.'
       operationId: generate_3d_asset_api_generate_3d_asset_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Generate3DAssetRequest'
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -124,6 +61,12 @@ paths:
         schema:
           type: string
           title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -149,6 +92,12 @@ paths:
         schema:
           type: string
           title: Project Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -178,6 +127,12 @@ paths:
           type: integer
           default: 50
           title: Limit
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -198,6 +153,13 @@ paths:
       summary: Create Job
       description: Create a new job of any supported type.
       operationId: create_job_api_jobs_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
       requestBody:
         required: true
         content:
@@ -229,6 +191,77 @@ paths:
         schema:
           type: string
           title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/list-gcs-files:
+    get:
+      summary: List Gcs Files
+      description: List all files in the GCS bucket.
+      operationId: list_gcs_files_api_list_gcs_files_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/download-gcs-file/{filename}:
+    get:
+      summary: Download Gcs File
+      description: Download a file from GCS by filename.
+      operationId: download_gcs_file_api_download_gcs_file__filename__get
+      parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Filename
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/upload-to-gcs:
+    post:
+      summary: Upload To Gcs
+      description: Upload a file to GCS.
+      operationId: upload_to_gcs_api_upload_to_gcs_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_to_gcs_api_upload_to_gcs_post'
       responses:
         '200':
           description: Successful Response
@@ -278,52 +311,38 @@ paths:
           content:
             application/json:
               schema: {}
-  /api/hello:
+  /:
     get:
-      summary: Hello
-      operationId: hello_api_hello_get
+      summary: Root
+      operationId: root__get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-  /api/protected:
+  /health:
     get:
-      summary: Protected Route
-      operationId: protected_route_api_protected_get
+      summary: Health Check
+      operationId: health_check_health_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-  /mock-upload/{blob_name}:
-    put:
-      summary: Mock Upload
-      description: Mock endpoint to handle file uploads in development mode.
-      operationId: mock_upload_mock_upload__blob_name__put
-      parameters:
-      - name: blob_name
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Blob Name
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    Body_upload_to_gcs_api_upload_to_gcs_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_upload_to_gcs_api_upload_to_gcs_post
     Generate3DAssetRequest:
       properties:
         prompt:
@@ -332,6 +351,10 @@ components:
           minLength: 1
           title: Prompt
           description: Text prompt for 3D asset generation
+        project_id:
+          type: string
+          title: Project Id
+          description: Project ID that the asset belongs to
         webhook_url:
           anyOf:
           - type: string
@@ -341,6 +364,7 @@ components:
       type: object
       required:
       - prompt
+      - project_id
       title: Generate3DAssetRequest
     Generate3DAssetResponse:
       properties:
@@ -506,79 +530,3 @@ components:
       - msg
       - type
       title: ValidationError
-    VideoMetadata:
-      properties:
-        video_id:
-          type: string
-          title: Video Id
-        user_id:
-          type: string
-          title: User Id
-        name:
-          type: string
-          title: Name
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Description
-        status:
-          type: string
-          enum:
-          - pending
-          - uploaded
-          title: Status
-        S3URL:
-          type: string
-          title: S3Url
-        created_at:
-          type: string
-          format: date-time
-          title: Created At
-      type: object
-      required:
-      - video_id
-      - user_id
-      - name
-      - status
-      - S3URL
-      - created_at
-      title: VideoMetadata
-    VideoMetadataCreate:
-      properties:
-        name:
-          type: string
-          title: Name
-        user_id:
-          type: string
-          title: User Id
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Description
-        status:
-          type: string
-          enum:
-          - pending
-          - uploaded
-          title: Status
-        S3URL:
-          type: string
-          title: S3Url
-      type: object
-      required:
-      - name
-      - user_id
-      - status
-      - S3URL
-      title: VideoMetadataCreate
-    VideoRequest:
-      properties:
-        prompt:
-          type: string
-          title: Prompt
-      type: object
-      required:
-      - prompt
-      title: VideoRequest

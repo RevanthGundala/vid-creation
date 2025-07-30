@@ -4,14 +4,14 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, Literal
 from uuid import uuid4
-from src.database.firebase import get_firestore_client
+from src.database.firestore import FirestoreService
 from src.schemas.job import JobStatus, JobUpdate, WebhookNotification
 
 logger = logging.getLogger(__name__)
 
 class JobService:
     def __init__(self):
-        self.db = get_firestore_client()
+        self.db = FirestoreService.get_firestore_service()
     
     async def create_job(
         self, 
@@ -37,27 +37,23 @@ class JobService:
         )
         
         # Store in Firestore
-        doc_ref = self.db.collection("jobs").document(job_id)
-        doc_ref.set(job_data.dict())
+        await self.db.create_document("jobs", job_id, job_data.dict())
         
         logger.info(f"Created job {job_id} for project {project_id} for user {user_id}")
         return job_data
     
     async def update_job(self, job_id: str, update_data: JobUpdate) -> JobStatus:
         """Update job status and send webhook notification if configured."""
-        doc_ref = self.db.collection("jobs").document(job_id)
-        
         # Get current job data
-        doc = doc_ref.get()
-        if not doc.exists:
+        current_data = await self.db.get_document("jobs", job_id)
+        if current_data is None:
             raise ValueError(f"Job {job_id} not found")
         
-        current_data = doc.to_dict()
         current_data.update(update_data.dict(exclude_unset=True))
         current_data["modified_at"] = datetime.now()
         
         # Update in Firestore
-        doc_ref.update(current_data)
+        await self.db.update_document("jobs", job_id, current_data)
         
         # Send webhook notification if URL is provided
         if current_data.get("webhook_url"):
@@ -77,26 +73,24 @@ class JobService:
     
     async def get_job(self, job_id: str) -> Optional[JobStatus]:
         """Get job status by ID."""
-        doc_ref = self.db.collection("jobs").document(job_id)
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            return JobStatus(**doc.to_dict())
+        data = await self.db.get_document("jobs", job_id)
+        if data:
+            return JobStatus(**data)
         return None
     
     async def get_user_jobs(self, user_id: str, limit: int = 50) -> list[JobStatus]:
         """Get all jobs for a specific user."""
-        query = self.db.collection("jobs").where("user_id", "==", user_id).order_by("created_at", direction="DESCENDING").limit(limit)
-        docs = query.stream()
+        filters = [("user_id", "==", user_id)]
+        docs = await self.db.query_collection("jobs", filters=filters, order_by="created_at", direction="DESCENDING", limit=limit)
         
-        return [JobStatus(**doc.to_dict()) for doc in docs]
+        return [JobStatus(**doc) for doc in docs]
     
     async def get_project_jobs(self, project_id: str, limit: int = 50) -> list[JobStatus]:
         """Get all jobs for a specific project."""
-        query = self.db.collection("jobs").where("project_id", "==", project_id).order_by("created_at", direction="DESCENDING").limit(limit)
-        docs = query.stream()
+        filters = [("project_id", "==", project_id)]
+        docs = await self.db.query_collection("jobs", filters=filters, order_by="created_at", direction="DESCENDING", limit=limit)
         
-        return [JobStatus(**doc.to_dict()) for doc in docs]
+        return [JobStatus(**doc) for doc in docs]
     
     async def _send_webhook_notification(self, webhook_url: str, notification: WebhookNotification):
         """Send webhook notification asynchronously."""

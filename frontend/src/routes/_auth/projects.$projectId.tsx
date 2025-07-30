@@ -1,34 +1,31 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState, useRef } from 'react'
-import { use3dAsset } from '../../hooks'
+import { use3dAsset, useProject } from '../../hooks'
 import { toast } from 'sonner'
 import { Editor } from '@/components/editor'
 import ChatBox from '@/components/ChatBox'
-
-type Project = {
-  id: string
-  name: string
-}
-
-// TODO: Replace with actual API call
-function fetchProject(projectId: string) {
-  return {
-    id: projectId,
-    name: 'Project 1',
-  }
-}
+import type { Project } from '../../hooks/use-project'
 
 export const Route = createFileRoute('/_auth/projects/$projectId')({
-  loader: ({ params }) => fetchProject(params.projectId),
   component: ProjectComponent,
 })
 
 function ProjectComponent() {
   const params = Route.useParams()
-  const [project, setProject] = useState<Project | null>(null)
   const [prompt, setPrompt] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [asset, setAsset] = useState<any | null>(null)
+
+  // Use the useProject hook instead of local state and fetchProject
+  const { project, error, isLoading, jobs } = useProject(params.projectId, {
+    onSuccess: (project: Project) => {
+      console.log('Project loaded:', project)
+    },
+    onError: (error: string) => {
+      console.error('Failed to load project:', error)
+      toast.error(`Failed to load project: ${error}`)
+    }
+  })
 
   const { generate3dAsset } = use3dAsset({
     onSuccess: (data) => {
@@ -39,19 +36,79 @@ function ProjectComponent() {
     }
   })
   
+  // Find the latest completed 3D asset job
+  const latestCompletedJob = jobs
+    .filter(job => job.job_type === "3d" && job.status === "completed")
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  
+  // Generate asset URL for the latest completed job (using public endpoint for development)
+  const assetUrl = latestCompletedJob ? `/api/assets/public/${latestCompletedJob.job_id}` : undefined;
+  
+  // Debug logging
+  console.log('Jobs:', jobs);
+  console.log('Latest completed job:', latestCompletedJob);
+  console.log('Asset URL:', assetUrl);
+  
+  // Test the asset URL if it exists
   useEffect(() => {
-    const project = fetchProject(params.projectId)
-    setProject(project)
-  }, [params.projectId])
+    if (assetUrl) {
+      console.log('Testing asset URL:', assetUrl);
+      fetch(assetUrl)
+        .then(response => {
+          console.log('Asset URL test response:', response.status, response.statusText);
+          console.log('Content-Type:', response.headers.get('content-type'));
+          console.log('Content-Length:', response.headers.get('content-length'));
+        })
+        .catch(error => {
+          console.error('Asset URL test error:', error);
+        });
+    }
+  }, [assetUrl]);
 
   const handleSubmit = (prompt: string) => {
-    generate3dAsset({ prompt })
+    generate3dAsset({ prompt, project_id: params.projectId })
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
+        <div className="text-xl">Loading project...</div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
+        <div className="text-xl text-red-400">Error: {error}</div>
+      </div>
+    )
+  }
+
+  // Show project not found state
+  if (!project) {
+    return (
+      <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
+        <div className="text-xl">Project not found</div>
+      </div>
+    )
   }
 
   return (
     <div className="relative min-h-screen bg-[#282c34] text-white">
+      {/* Project info header */}
+      <div className="absolute top-4 left-4 z-50">
+        <h1 className="text-2xl font-bold">{project.name}</h1>
+        <p className="text-sm text-gray-400">Project ID: {project.project_id}</p>
+        {jobs.length > 0 && (
+          <p className="text-sm text-gray-400">{jobs.length} job{jobs.length !== 1 ? 's' : ''} in this project</p>
+        )}
+      </div>
+
       {/* Editor takes full screen */}
-      <Editor />
+      <Editor assetUrl={assetUrl} />
       
       {/* ChatBox positioned as overlay */}
       <div className="absolute bottom-36 left-0 right-0 flex justify-center z-50">

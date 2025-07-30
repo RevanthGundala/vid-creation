@@ -4,57 +4,6 @@
  */
 
 export interface paths {
-    "/api/video": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Generate Video */
-        post: operations["generate_video_api_video_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/video-metadata": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Video Metadata */
-        post: operations["create_video_metadata_api_video_metadata_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/generate-upload-url": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Generate Upload Url */
-        post: operations["generate_upload_url_api_generate_upload_url_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/google": {
         parameters: {
             query?: never;
@@ -179,6 +128,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/list-gcs-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Gcs Files
+         * @description List all files in the GCS bucket.
+         */
+        get: operations["list_gcs_files_api_list_gcs_files_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/download-gcs-file/{filename}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Gcs File
+         * @description Download a file from GCS by filename.
+         */
+        get: operations["download_gcs_file_api_download_gcs_file__filename__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/upload-to-gcs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload To Gcs
+         * @description Upload a file to GCS.
+         */
+        post: operations["upload_to_gcs_api_upload_to_gcs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/webhooks/{job_id}/stream": {
         parameters: {
             query?: never;
@@ -220,15 +229,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/hello": {
+    "/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Hello */
-        get: operations["hello_api_hello_get"];
+        /** Root */
+        get: operations["root__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -237,36 +246,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/protected": {
+    "/health": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Protected Route */
-        get: operations["protected_route_api_protected_get"];
+        /** Health Check */
+        get: operations["health_check_health_get"];
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mock-upload/{blob_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Mock Upload
-         * @description Mock endpoint to handle file uploads in development mode.
-         */
-        put: operations["mock_upload_mock_upload__blob_name__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -278,6 +267,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Body_upload_to_gcs_api_upload_to_gcs_post */
+        Body_upload_to_gcs_api_upload_to_gcs_post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+        };
         /** Generate3DAssetRequest */
         Generate3DAssetRequest: {
             /**
@@ -285,6 +282,11 @@ export interface components {
              * @description Text prompt for 3D asset generation
              */
             prompt: string;
+            /**
+             * Project Id
+             * @description Project ID that the asset belongs to
+             */
+            project_id: string;
             /**
              * Webhook Url
              * @description Optional webhook URL for job status updates
@@ -414,50 +416,6 @@ export interface components {
             /** Error Type */
             type: string;
         };
-        /** VideoMetadata */
-        VideoMetadata: {
-            /** Video Id */
-            video_id: string;
-            /** User Id */
-            user_id: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "pending" | "uploaded";
-            /** S3Url */
-            S3URL: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /** VideoMetadataCreate */
-        VideoMetadataCreate: {
-            /** Name */
-            name: string;
-            /** User Id */
-            user_id: string;
-            /** Description */
-            description?: string | null;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "pending" | "uploaded";
-            /** S3Url */
-            S3URL: string;
-        };
-        /** VideoRequest */
-        VideoRequest: {
-            /** Prompt */
-            prompt: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -467,103 +425,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    generate_video_api_video_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VideoRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": string;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_video_metadata_api_video_metadata_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["VideoMetadataCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VideoMetadata"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    generate_upload_url_api_generate_upload_url_post: {
-        parameters: {
-            query: {
-                filename: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     google_auth_callback_auth_google_post: {
         parameters: {
             query?: never;
@@ -587,7 +448,9 @@ export interface operations {
     generate_3d_asset_api_generate_3d_asset_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -620,7 +483,9 @@ export interface operations {
     get_job_status_api_jobs__job_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path: {
                 job_id: string;
             };
@@ -651,7 +516,9 @@ export interface operations {
     get_project_jobs_api_projects__project_id__jobs_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path: {
                 project_id: string;
             };
@@ -684,7 +551,9 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -713,7 +582,9 @@ export interface operations {
     create_job_api_jobs_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -746,13 +617,101 @@ export interface operations {
     get_ksplat_asset_api_assets__job_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string;
+            };
             path: {
                 job_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_gcs_files_api_list_gcs_files_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    download_gcs_file_api_download_gcs_file__filename__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                filename: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_to_gcs_api_upload_to_gcs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_to_gcs_api_upload_to_gcs_post"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -825,7 +784,7 @@ export interface operations {
             };
         };
     };
-    hello_api_hello_get: {
+    root__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -845,7 +804,7 @@ export interface operations {
             };
         };
     };
-    protected_route_api_protected_get: {
+    health_check_health_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -861,37 +820,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    mock_upload_mock_upload__blob_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                blob_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

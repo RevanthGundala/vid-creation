@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from src.schemas.project import Project
 from src.schemas.asset import Generate3DAssetRequest, Generate3DAssetResponse, AssetMetadata
 from src.schemas.job import JobStatus, JobCreate, JobUpdate
-from src.database.firebase import firebase_auth_dependency, get_firestore_client
+from src.database.firebase import FirebaseService
 from src.services.job_service import job_service
 from src.services.job_processor import job_processor
 from fastapi import Depends
@@ -22,7 +22,7 @@ router = APIRouter()
 async def generate_3d_asset(
     request: Generate3DAssetRequest, 
     background_tasks: BackgroundTasks,
-    user=Depends(firebase_auth_dependency)
+    user=Depends(FirebaseService.firebase_auth_dependency)
 ):
     """
     Generate a 3D asset based on a text prompt.
@@ -35,6 +35,7 @@ async def generate_3d_asset(
         job_type="3d",
         parameters={"prompt": request.prompt},
         user_id=user["uid"],
+        project_id=request.project_id,
         webhook_url=request.webhook_url
     )
     
@@ -49,7 +50,7 @@ async def generate_3d_asset(
     return Generate3DAssetResponse(job_id=job.job_id, status=job.status)
 
 @router.get("/api/jobs/{job_id}", response_model=JobStatus)
-async def get_job_status(job_id: str, user=Depends(firebase_auth_dependency)):
+async def get_job_status(job_id: str, user=Depends(FirebaseService.firebase_auth_dependency)):
     """
     Get the status of a specific job.
     """
@@ -64,7 +65,7 @@ async def get_job_status(job_id: str, user=Depends(firebase_auth_dependency)):
     return job
 
 @router.get("/api/projects/{project_id}/jobs", response_model=list[JobStatus])
-async def get_project_jobs(project_id: str, user=Depends(firebase_auth_dependency)):
+async def get_project_jobs(project_id: str, user=Depends(FirebaseService.firebase_auth_dependency)):
     """
     Get all jobs for a specific project.
     """
@@ -74,7 +75,7 @@ async def get_project_jobs(project_id: str, user=Depends(firebase_auth_dependenc
 @router.get("/api/jobs", response_model=list[JobStatus])
 async def get_user_jobs(
     limit: int = 50,
-    user=Depends(firebase_auth_dependency)
+    user=Depends(FirebaseService.firebase_auth_dependency)
 ):
     """
     Get all jobs for the authenticated user.
@@ -86,7 +87,7 @@ async def get_user_jobs(
 async def create_job(
     job_request: JobCreate,
     background_tasks: BackgroundTasks,
-    user=Depends(firebase_auth_dependency)
+    user=Depends(FirebaseService.firebase_auth_dependency)
 ):
     """
     Create a new job of any supported type.
@@ -109,9 +110,9 @@ async def create_job(
     return job
 
 @router.get("/api/assets/{job_id}")
-async def get_ksplat_asset(job_id: str, user=Depends(firebase_auth_dependency)):
+async def get_ksplat_asset(job_id: str, user=Depends(FirebaseService.firebase_auth_dependency)):
     """
-    Serve a .ksplat file for a specific job.
+    Serve a .ksplat file for a specific job (authenticated).
     """
     # Get job to verify ownership and status
     job = await job_service.get_job(job_id)
@@ -137,6 +138,35 @@ async def get_ksplat_asset(job_id: str, user=Depends(firebase_auth_dependency)):
         path=str(file_path),
         filename=filename,
         media_type="application/octet-stream"
+    )
+
+@router.get("/api/assets/public/{job_id}")
+async def get_ksplat_asset_public(job_id: str):
+    """
+    Serve a .ksplat file for a specific job (public, for development).
+    """
+    # Get job to verify status
+    job = await job_service.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status != "completed":
+        raise HTTPException(status_code=400, detail="Job not completed yet")
+    
+    # Get the filename from job result
+    filename = f"{job_id}.ksplat"
+    file_path = Path("assets/ksplat") / filename
+    
+    # Check if file exists
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Asset file not found")
+    
+    # Return the file with appropriate headers for .ksplat files
+    return FileResponse(
+        path=str(file_path),
+        filename=filename,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"inline; filename={filename}"}
     )
 
 class UploadToGCSResponse(BaseModel):
@@ -203,7 +233,7 @@ async def download_gcs_file(filename: str):
 @router.post("/api/upload-to-gcs")
 async def upload_to_gcs(
     file: UploadFile = File(...),
-    # user=Depends(firebase_auth_dependency)
+    user=Depends(FirebaseService.firebase_auth_dependency)
 ):
     """
     Upload a file to GCS.
@@ -214,8 +244,7 @@ async def upload_to_gcs(
             raise HTTPException(status_code=500, detail="GCS client not available")
         
         # Generate a unique filename
-        # filename = f"{user['uid']}_{file.filename}"
-        filename = f"{uuid4()}_{file.filename}"
+        filename = f"{user['uid']}_{file.filename}"
         
         # Get the bucket
         bucket = gcs_client.bucket(config.gcp_bucket_name)

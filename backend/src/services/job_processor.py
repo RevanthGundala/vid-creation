@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
@@ -46,9 +47,17 @@ class JobProcessor:
             output_filename = f"{job_id}.ksplat"
             output_path = self.assets_dir / output_filename
             
-            # For now, we'll create a placeholder file
+            # For now, we'll copy the truck.ksplat file as a demo
             # In production, this would be where your actual 3D generation happens
-            output_path.touch()
+            truck_file = self.assets_dir / "truck.ksplat"
+            if truck_file.exists():
+                import shutil
+                shutil.copy2(truck_file, output_path)
+                logger.info(f"Copied truck.ksplat to {output_filename}")
+            else:
+                # Fallback: create a placeholder file
+                output_path.touch()
+                logger.warning(f"truck.ksplat not found, created placeholder file")
             
             # Update job as completed
             result = {

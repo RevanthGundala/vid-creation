@@ -1,4 +1,4 @@
-import { $api, fetchClient } from "..";
+import { $api } from ".";
 
 interface SignedUploadUrlRequest {
     filename: string;

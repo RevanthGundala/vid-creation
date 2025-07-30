@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
 
-export function GaussianSplat() {
+interface GaussianSplatProps {
+  assetUrl?: string;
+}
+
+export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GaussianSplats3D.Viewer | undefined>(undefined);
 
@@ -35,8 +39,32 @@ export function GaussianSplat() {
       // Load the splat scene
       if (viewerRef.current) {
         console.log('Loading splat scene...');
-        // Add a sample splat scene (you'll need to replace with your actual file path)
-        viewerRef.current.addSplatScene("/splats/bonsai/bonsai_high.ksplat", {
+        
+        // Use the provided asset URL or fallback to the sample
+        const sceneUrl = assetUrl || "/splats/bonsai/bonsai_high.ksplat";
+        console.log('Loading scene from:', sceneUrl);
+        console.log('Asset URL provided:', assetUrl);
+        
+        // Test if the URL is accessible
+        if (assetUrl) {
+          fetch(assetUrl)
+            .then(response => {
+              console.log('Asset fetch response:', response.status, response.statusText);
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.blob();
+            })
+            .then(blob => {
+              console.log('Asset blob size:', blob.size);
+              console.log('Asset blob type:', blob.type);
+            })
+            .catch(error => {
+              console.error('Error fetching asset:', error);
+            });
+        }
+        
+        viewerRef.current.addSplatScene(sceneUrl, {
           'splatAlphaRemovalThreshold': 5,
           'showLoadingUI': true,
           'position': [0, 1, 0],
@@ -66,13 +94,31 @@ export function GaussianSplat() {
         viewerRef.current.dispose();
       }
     };
-  }, []);
+  }, [assetUrl]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className="w-full h-full min-h-[400px] bg-gray-900"
-      style={{ border: '2px solid red' }}
-    />
+    <div className="w-full h-full min-h-[400px] bg-gray-900 p-4 text-white">
+      <div 
+        ref={containerRef} 
+        className="w-full h-full"
+        style={{ border: '2px solid red' }}
+      />
+      {assetUrl && (
+        <div className="mt-4 p-4 bg-gray-800 rounded">
+          <h3 className="text-lg font-bold mb-2">Asset Debug Info:</h3>
+          <p><strong>Asset URL:</strong> {assetUrl}</p>
+          <p><strong>Container:</strong> {containerRef.current ? 'Ready' : 'Not ready'}</p>
+          <p><strong>Viewer:</strong> {viewerRef.current ? 'Created' : 'Not created'}</p>
+          <a 
+            href={assetUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 underline"
+          >
+            Download Asset File
+          </a>
+        </div>
+      )}
+    </div>
   );
 }

@@ -45,7 +45,9 @@ if (import.meta.env.DEV) {
   console.log('🔧 Connecting to Firebase emulators...');
   
   // Connect to Auth emulator
-  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectAuthEmulator(auth, 'http://localhost:9099', { 
+    disableWarnings: true
+  });
   
   // Connect to Firestore emulator
   connectFirestoreEmulator(db, 'localhost', 8080);
