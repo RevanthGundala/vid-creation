@@ -14,9 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { InferOutput } from "valibot"
 import { email, object, string, pipe, safeParse } from "valibot"
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, type User, getAuth, signInWithPopup } from 'firebase/auth';
 import { toast } from 'sonner';
-import { auth } from '@/utils/firebase';
+import { fetchClient } from "@/hooks";
+import { auth } from "../utils/firebase";
 
 export const Route = createFileRoute('/login')({
   component: Authentication,
@@ -24,27 +25,6 @@ export const Route = createFileRoute('/login')({
 
 
 function Authentication() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Handle redirect result when component mounts
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          console.log("Redirect result:", result);
-          toast.success("Successfully signed in!");
-          navigate({ to: "/projects" });
-        }
-      } catch (error: any) {
-        console.error("Redirect result error:", error);
-        toast.error("Failed to complete sign in");
-      }
-    };
-
-    handleRedirectResult();
-  }, [navigate]);
-
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -76,80 +56,104 @@ export function LoginForm({
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const navigate = useNavigate();
+
+  const handleEmailVerification = async (user: User) => {
+    try {
+      await user.reload();
+      
+      if (user.emailVerified) {
+        // TODO: Send a proper 200 success/error response. Currently sends an id token back.
+        const response = await fetchClient.POST("/auth/email", {
+          email: user.email!,
+        });
+        setNeedsEmailVerification(false);
+        navigate({ to: "/projects" });
+      } else {
+        toast.error("Please verify your email before continuing.");
+      }
+    } catch (error) {
+      console.error("Email verification error:", error);
+      toast.error("Failed to verify email. Please try again.");
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted");
     const formData = new FormData(e.target as HTMLFormElement);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     
-    // Validate the form data against the schema
     const result = safeParse(AuthSchema, { email, password });
     
     if (!result.success) {
-      // Handle validation errors
       console.error("Validation errors:", result.issues);
-      // You can display these errors to the user
+      toast.error("Please enter a valid email and password");
       return;
     }
     
-    // If validation passes, result.output contains the validated data
     const validatedData: AuthForm = result.output;
-    console.log("Validated data:", validatedData);
-    try { 
-      const result = await signInWithEmailAndPassword(auth, validatedData.email, validatedData.password);
-      setIsSigningIn(true);
-      if (result.user) {
-        navigate({ to: "/projects" });
+    setIsSigningIn(true);
+    
+    try {
+      if (isSignUpMode) {
+        const createResult = await createUserWithEmailAndPassword(
+          auth, 
+          validatedData.email, 
+          validatedData.password
+        );
+        
+        if (createResult.user) {
+          await sendEmailVerification(createResult.user);
+          toast.success("Please check your email to verify your account before signing in.");
+          setIsSigningIn(false);
+          return;
+        }
       } else {
-        throw new Error("Failed to sign in with email and password");
+        const result = await signInWithEmailAndPassword(auth, validatedData.email, validatedData.password);
+        
+        if (result.user) {
+          if (!result.user.emailVerified) {
+            await sendEmailVerification(result.user);
+            toast.info("Please check your email and verify your account before continuing.");
+            setNeedsEmailVerification(true);
+            setIsSigningIn(false);
+            return;
+          }
+          await handleEmailVerification(result.user);
+        } else {
+          throw new Error("Failed to sign in with email and password");
+        }
       }
     } catch (error: any) {
-      console.error("Sign-in error:", error);
-      
-      // Check if user doesn't exist and automatically create account
-      if (error.code === 'auth/user-not-found') {
-        toast.info("No account found. Creating a new account...");
-        
-        try {
-          const createResult = await createUserWithEmailAndPassword(
-            auth, 
-            validatedData.email, 
-            validatedData.password
-          );
-          
-          if (createResult.user) {
-            toast.success("Account created and signed in successfully!");
-            navigate({ to: "/projects" });
-          }
-        } catch (createError: any) {
-          console.error("Account creation error:", createError);
-          
-          // Handle specific Firebase auth errors
-          if (createError.code === 'auth/weak-password') {
-            toast.error("Password should be at least 6 characters long");
-          } else if (createError.code === 'auth/email-already-in-use') {
-            toast.error("An account with this email already exists");
-          } else if (createError.code === 'auth/invalid-email') {
-            toast.error("Please enter a valid email address");
-          } else if (createError.code === 'auth/operation-not-allowed') {
-            toast.error("Email/password accounts are not enabled. Please contact support.");
-          } else {
-            toast.error("Failed to create account. Please try again.");
-          }
+      if (isSignUpMode) {
+        if (error.code === 'auth/weak-password') {
+          toast.error("Password should be at least 6 characters long");
+        } else if (error.code === 'auth/email-already-in-use') {
+          toast.error("An account with this email already exists");
+        } else if (error.code === 'auth/invalid-email') {
+          toast.error("Please enter a valid email address");
+        } else if (error.code === 'auth/operation-not-allowed') {
+          toast.error("Email/password accounts are not enabled. Please contact support.");
+        } else {
+          toast.error("Failed to create account. Please try again.");
         }
-      } else if (error.code === 'auth/wrong-password') {
-        toast.error("Incorrect password. Please try again.");
-      } else if (error.code === 'auth/invalid-email') {
-        toast.error("Please enter a valid email address");
-      } else if (error.code === 'auth/too-many-requests') {
-        toast.error("Too many failed attempts. Please try again later.");
-      } else if (error.code === 'auth/user-disabled') {
-        toast.error("This account has been disabled. Please contact support.");
       } else {
-        toast.error("Failed to sign in. Please try again.");
+        if (error.code === 'auth/user-not-found') {
+          toast.error("No account found with this email address");
+        } else if (error.code === 'auth/wrong-password') {
+          toast.error("Incorrect password. Please try again.");
+        } else if (error.code === 'auth/invalid-email') {
+          toast.error("Please enter a valid email address");
+        } else if (error.code === 'auth/too-many-requests') {
+          toast.error("Too many failed attempts. Please try again later.");
+        } else if (error.code === 'auth/user-disabled') {
+          toast.error("This account has been disabled. Please contact support.");
+        } else {
+          toast.error("Failed to sign in. Please try again.");
+        }
       }
       
       setIsSigningIn(false);
@@ -191,33 +195,59 @@ export function LoginForm({
   const handleGoogleSignIn = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Google sign-in clicked");
-    
     setIsSigningIn(true);
     
     try {
       const provider = new GoogleAuthProvider();
-      // Add additional scopes if needed
       provider.addScope('email');
       provider.addScope('profile');
-      
-      // Use redirect instead of popup for better emulator compatibility
-      await signInWithRedirect(auth, provider);
-      
-      // Note: The redirect will happen automatically, and the result will be handled
-      // in the component's useEffect or when the page loads back
+      const result = await signInWithPopup(auth, provider);
+      console.log("result", result);
+      navigate({ to: "/projects" });
     } catch (error: any) {
+      if (error?.code === 'auth/popup-closed-by-user') {
+        console.log('Popup closed before completing sign-in.');
+        toast.error("Sign in cancelled");
+        setIsSigningIn(false);
+        return;
+      }
       console.error("Sign-in error:", error);
       toast.error("Failed to sign in with Google");
       setIsSigningIn(false);
     }
   }
 
+  useEffect(() => {
+      const handleRedirectResult = async () => {
+        try {
+          console.log("getRedirectResult");
+          const result = await getRedirectResult(auth);
+          console.log("result", result);
+          if (result && result.user) {
+            const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+            if (isNewUser) {
+              toast.success("Account created successfully!");
+            } else {
+              toast.success("Successfully signed in!");
+            }
+            navigate({ to: "/projects" });
+          }
+        } catch (error: any) {
+          console.error("Redirect result error:", error);
+          toast.error("Failed to complete sign in");
+        }
+    };
+
+    handleRedirectResult();
+  }, [navigate]);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome</CardTitle>
+          <CardTitle className="text-xl">
+            {isSignUpMode ? "Create Account" : "Welcome"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-6">
@@ -232,7 +262,7 @@ export function LoginForm({
                 {isSigningIn ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
-                    Signing in...
+                    {isSignUpMode ? "Creating account..." : "Signing in..."}
                   </>
                 ) : (
                   <>
@@ -242,7 +272,7 @@ export function LoginForm({
                         fill="currentColor"
                       />
                     </svg>
-                    Login with Google
+                    {isSignUpMode ? "Sign up with Google" : "Login with Google"}
                   </>
                 )}
               </Button>
@@ -265,13 +295,15 @@ export function LoginForm({
             <div className="grid gap-3">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="ml-auto text-sm underline-offset-4 hover:underline"
-                >
-                  Forgot your password?
-                </button>
+                {!isSignUpMode && (
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="ml-auto text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
               </div>
               <div className="relative">
                 <Input 
@@ -322,17 +354,60 @@ export function LoginForm({
               </div>
             </div>
             <Button type="submit" className="w-full">
-              Login
+              {isSignUpMode ? "Sign Up" : "Login"}
             </Button>
+            
+            {needsEmailVerification && auth.currentUser && (
+              <div className="space-y-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => auth.currentUser && handleEmailVerification(auth.currentUser)}
+                >
+                  I've verified my email
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm"
+                  className="w-full text-sm"
+                  onClick={async () => {
+                    if (!auth.currentUser) return;
+                    try {
+                      await sendEmailVerification(auth.currentUser);
+                      toast.success("Verification email sent again!");
+                    } catch (error) {
+                      toast.error("Failed to send verification email");
+                    }
+                  }}
+                >
+                  Resend verification email
+                </Button>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>
+      
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground">
+          {isSignUpMode ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setIsSignUpMode(!isSignUpMode)}
+            className="text-primary hover:underline font-medium"
+          >
+            {isSignUpMode ? "Log in" : "Sign up"}
+          </button>
+        </p>
+      </div>
+      
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>
 
-      {/* Forgot Password Modal */}
       {showForgotPassword && (
         <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in-0 duration-200">
           <div className="bg-white rounded-lg p-6 w-full max-w-md animate-in slide-in-from-bottom-4 zoom-in-95 duration-300">

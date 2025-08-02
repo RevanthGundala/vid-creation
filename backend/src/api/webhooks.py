@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 import json
 import asyncio
-from typing import Dict, Set
+from typing import Set
 import logging
 
 logger = logging.getLogger(__name__)
@@ -11,6 +11,8 @@ router = APIRouter()
 
 # Store active webhook connections
 active_connections: Set[str] = set()
+
+# TODO: Currently not used.
 
 @router.get("/api/webhooks/{job_id}/stream")
 async def stream_job_updates(job_id: str):

@@ -3,6 +3,8 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 /* Remove default margins and padding */
 html, body {
   margin: 0;

@@ -4,7 +4,7 @@
 # from diffusers import DiffusionPipeline
 # from diffusers.utils import export_to_video
 # from pydantic import BaseModel
-# from src.database.firestore import get_firestore_client
+# from src.database.repositories.dependencies import get_asset_repository
 # from src.schemas.asset import AssetMetadata
 # from datetime import datetime
 # from uuid import uuid4

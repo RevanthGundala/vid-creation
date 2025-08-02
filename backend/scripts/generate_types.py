@@ -5,7 +5,6 @@ This script fetches the OpenAPI JSON from FastAPI server, converts it to YAML,
 and then uses npx openapi-typescript to generate TypeScript types.
 """
 
-import json
 import yaml
 import requests
 import subprocess

@@ -97,11 +97,10 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
   }, [assetUrl]);
 
   return (
-    <div className="w-full h-full min-h-[400px] bg-gray-900 p-4 text-white">
+    <div className="w-full h-full min-h-[400px] p-4 text-white">
       <div 
         ref={containerRef} 
         className="w-full h-full"
-        style={{ border: '2px solid red' }}
       />
       {assetUrl && (
         <div className="mt-4 p-4 bg-gray-800 rounded">

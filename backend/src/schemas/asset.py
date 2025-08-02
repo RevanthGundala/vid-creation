@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import datetime
 
+# TODO: FIx this file with correct types
 class Generate3DAssetRequest(BaseModel):
     prompt: str = Field(..., description="Text prompt for 3D asset generation", min_length=1, max_length=1000)
     project_id: str = Field(..., description="Project ID that the asset belongs to")

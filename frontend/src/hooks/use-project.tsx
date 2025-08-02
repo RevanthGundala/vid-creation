@@ -1,6 +1,5 @@
 
 import { $api } from ".";
-import type { components } from "../types/api";
 
 // Project type based on the backend schema
 export interface Project {
@@ -46,29 +45,10 @@ const mockProjects: Record<string, Project> = {
 export function useProject(projectId: string, options: UseProjectOptions = {}) {
   const { enabled = true, onSuccess, onError } = options;
 
-  // For now, we'll use a mock implementation since there's no direct project endpoint
-  // In the future, when a project endpoint is added, this can be replaced with:
-  // const { data: project, error, isLoading } = $api.useQuery("get", "/api/projects/{project_id}", {
-  //   params: { path: { project_id: projectId } },
-  //   enabled: enabled && !!projectId,
-  // });
-
-  const mockFetchProject = async (id: string): Promise<Project> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const project = mockProjects[id];
-    if (!project) {
-      throw new Error(`Project with ID ${id} not found`);
-    }
-    
-    return project;
-  };
-
   // Use the project jobs endpoint to get project information indirectly
   const { data: projectJobs, error: jobsError, isLoading: isJobsLoading } = $api.useQuery(
     "get", 
-    "/api/projects/{project_id}/jobs",
+    `/api/jobs`,
     {
       params: { path: { project_id: projectId } },
       enabled: enabled && !!projectId,

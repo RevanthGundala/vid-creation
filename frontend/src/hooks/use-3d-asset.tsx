@@ -5,11 +5,21 @@ import { useJobStatus } from "./use-job-status";
 import { useState } from "react";
 import type { components } from "../types/api";
 
-type Generate3DAssetRequest = components["schemas"]["Generate3DAssetRequest"];
-type Generate3DAssetResponse = components["schemas"]["Generate3DAssetResponse"];
+type JobCreate = components["schemas"]["JobCreate"];
+type Job = components["schemas"]["Job"];
+type JobType = components["schemas"]["JobType"];
+
+// Constants to ensure we use the correct job types
+const JOB_TYPE_3D_OBJECT: JobType = "Object";
+
+// Interface for 3D asset generation request
+interface Generate3DAssetRequest {
+    prompt: string;
+    project_id: string;
+}
 
 interface Generate3dAssetOptions {
-    onSuccess?: (data: Generate3DAssetResponse) => void;
+    onSuccess?: (data: any) => void; // Changed to any as JobCreate type is not directly used here
     onError?: (error: any) => void;
     onJobComplete?: (result: any) => void;
     onJobError?: (error: string) => void;
@@ -18,25 +28,28 @@ interface Generate3dAssetOptions {
 export function use3dAsset(options?: Generate3dAssetOptions) {
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
-    const generate3dAssetMutation = $api.useMutation("post", "/api/generate-3d-asset", {
-        onSuccess: (data: Generate3DAssetResponse) => {
-            console.log("Job created:", data);
+    const generate3dAssetMutation = $api.useMutation("post", "/api/jobs", {
+        onMutate: (variables) => {
+            console.log('🔄 Mutation started with variables:', variables);
+        },
+        onSuccess: (data: Job) => { // Changed to Job type
+            console.log("✅ Job created:", data);
             // The backend returns job_id, not project_id
             setCurrentJobId(data.job_id);
             options?.onSuccess?.(data);
             toast.success("3D asset generation started!");
         },
         onError: (error) => {
-            console.error("Failed to create job:", error);
+            console.error("❌ Failed to create job:", error);
+            
             options?.onError?.(error);
-            toast.error("Failed to start 3D asset generation");
+            toast.error("Failed to start 3D asset generation - Backend configuration issue");
         },
     });
 
     // Use job status hook to track the current job
     const jobStatus = useJobStatus({
         jobId: currentJobId || "",
-        pollInterval: 2000,
         onComplete: (result) => {
             console.log("Job completed:", result);
             options?.onJobComplete?.(result);
@@ -51,8 +64,12 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
         },
     });
 
-    const generate3dAsset = async ({ prompt, project_id }: Generate3DAssetRequest) => {
+    const generate3dAsset = async ({ prompt, project_id }: Generate3DAssetRequest): Promise<void> => {
         try {
+            console.log('🚀 generate3dAsset called with:', { prompt, project_id });
+            console.log('API client:', $api);
+            console.log('Mutation state:', generate3dAssetMutation);
+            
             if (!prompt) {
                 toast.error("Please provide a prompt");
                 return;
@@ -61,50 +78,33 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
             if (!project_id) {
                 throw new Error("Project ID is required");
             }
-
-            generate3dAssetMutation.mutate({
-                body: {
-                    prompt,
-                    project_id,
+            
+            console.log('API URL:', import.meta.env.VITE_API_URL);
+            console.log('Current user:', auth.currentUser?.uid);
+            console.log('About to call mutation with:', { prompt, project_id });
+            
+            const requestBody: JobCreate = {
+                project_id,
+                job_type: JOB_TYPE_3D_OBJECT,
+                parameters: {
+                    prompt: prompt,
+                    file_type: "ksplat", // TODO: make this dynamic
                 },
+            };
+            
+            generate3dAssetMutation.mutate({
+                body: requestBody,
             });
+            
+            console.log('Mutation called successfully');
         } catch (error) {
             console.error("Error generating 3D asset:", error);
             toast.error("Failed to generate 3D asset");
         }
     };
 
-    const downloadAsset = async (jobId: string) => {
-        try {
-            // Use the correct endpoint structure
-            const response = await fetch(`/api/assets/${jobId}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const blob = await response.blob();
-            
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${jobId}.ksplat`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            
-            toast.success("Asset downloaded successfully!");
-        } catch (error) {
-            console.error("Error downloading asset:", error);
-            toast.error("Failed to download asset");
-        }
-    };
-
     return {
         generate3dAsset,
-        downloadAsset,
         isGenerating: generate3dAssetMutation.isPending,
         currentJobId,
         jobStatus: jobStatus.jobStatus,

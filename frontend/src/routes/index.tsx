@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
+import { useAuth } from '../contexts/auth-context';
 import { Canvas, useThree } from "@react-three/fiber"
 import { OrbitControls, Environment } from "@react-three/drei"
 import { useRef, useState, useEffect } from "react"
@@ -192,7 +192,7 @@ const BoxLetter = ({ letter, position }: { letter: string, position: [number, nu
 const ClickableTextGroup = () => {
   const [isHovered, setIsHovered] = useState(false)
   const navigate = useNavigate()
-  const { user } = useFirebaseAuth();
+  const { user } = useAuth();
   
   const handleClick = () => {
     // Navigate to your desired route

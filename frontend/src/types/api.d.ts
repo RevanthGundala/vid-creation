@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/generate-3d-asset": {
+    "/auth/email": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,158 +30,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Generate 3D Asset
-         * @description Generate a 3D asset based on a text prompt.
-         *
-         *     This endpoint creates a new job for 3D asset generation and returns
-         *     a job ID that can be used to track the generation progress.
-         */
-        post: operations["generate_3d_asset_api_generate_3d_asset_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/jobs/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Job Status
-         * @description Get the status of a specific job.
-         */
-        get: operations["get_job_status_api_jobs__job_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/projects/{project_id}/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Project Jobs
-         * @description Get all jobs for a specific project.
-         */
-        get: operations["get_project_jobs_api_projects__project_id__jobs_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get User Jobs
-         * @description Get all jobs for the authenticated user.
-         */
-        get: operations["get_user_jobs_api_jobs_get"];
-        put?: never;
-        /**
-         * Create Job
-         * @description Create a new job of any supported type.
-         */
-        post: operations["create_job_api_jobs_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/assets/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Ksplat Asset
-         * @description Serve a .ksplat file for a specific job.
-         */
-        get: operations["get_ksplat_asset_api_assets__job_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/list-gcs-files": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Gcs Files
-         * @description List all files in the GCS bucket.
-         */
-        get: operations["list_gcs_files_api_list_gcs_files_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/download-gcs-file/{filename}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Download Gcs File
-         * @description Download a file from GCS by filename.
-         */
-        get: operations["download_gcs_file_api_download_gcs_file__filename__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/upload-to-gcs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Upload To Gcs
-         * @description Upload a file to GCS.
-         */
-        post: operations["upload_to_gcs_api_upload_to_gcs_post"];
+        /** Verify Email Auth */
+        post: operations["verify_email_auth_auth_email_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -229,6 +79,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job
+         * @description Get a specific job.
+         */
+        get: operations["get_job_api_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Project Jobs
+         * @description Get all jobs for a specific project and user.
+         */
+        get: operations["get_project_jobs_api_jobs__project_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Jobs
+         * @description Get all jobs for the authenticated user.
+         */
+        get: operations["get_user_jobs_api_jobs_get"];
+        put?: never;
+        /**
+         * Create Job
+         * @description Create a new job of any supported type.
+         */
+        post: operations["create_job_api_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/asset-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job Asset Url
+         * @description Dedicated endpoint to get the signed URL for a completed job's asset.
+         *     This is a separate endpoint from the main job endpoint to avoid bloating the job endpoint with too many responsibilities.
+         */
+        get: operations["get_job_asset_url_api_jobs__job_id__asset_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -267,74 +202,24 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** Body_upload_to_gcs_api_upload_to_gcs_post */
-        Body_upload_to_gcs_api_upload_to_gcs_post: {
-            /**
-             * File
-             * Format: binary
-             */
-            file: string;
-        };
-        /** Generate3DAssetRequest */
-        Generate3DAssetRequest: {
-            /**
-             * Prompt
-             * @description Text prompt for 3D asset generation
-             */
-            prompt: string;
-            /**
-             * Project Id
-             * @description Project ID that the asset belongs to
-             */
-            project_id: string;
-            /**
-             * Webhook Url
-             * @description Optional webhook URL for job status updates
-             */
-            webhook_url?: string | null;
-        };
-        /** Generate3DAssetResponse */
-        Generate3DAssetResponse: {
-            /**
-             * Job Id
-             * @description Unique identifier for the generated project
-             */
-            job_id: string;
-            /**
-             * Status
-             * @description Current status of the asset generation
-             * @enum {string}
-             */
-            status: "pending" | "processing" | "completed" | "failed";
+        /** AssetUrlResponse */
+        AssetUrlResponse: {
+            /** Signed Url */
+            signed_url: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Filename */
+            filename: string;
+            /** Storage Path */
+            storage_path: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
-        /** JobCreate */
-        JobCreate: {
-            /**
-             * Job Type
-             * @description Type of job to create
-             * @enum {string}
-             */
-            job_type: "3d" | "video";
-            /**
-             * Parameters
-             * @description Job parameters
-             */
-            parameters: {
-                [key: string]: unknown;
-            };
-            /**
-             * Webhook Url
-             * @description Optional webhook URL for notifications
-             */
-            webhook_url?: string | null;
-        };
-        /** JobStatus */
-        JobStatus: {
+        /** Job */
+        Job: {
             /**
              * Job Id
              * @description Unique job identifier
@@ -350,18 +235,10 @@ export interface components {
              * @description User who created the job
              */
             user_id: string;
-            /**
-             * Job Type
-             * @description Type of job
-             * @enum {string}
-             */
-            job_type: "3d" | "video";
-            /**
-             * Status
-             * @description Current job status
-             * @enum {string}
-             */
-            status: "queued" | "processing" | "completed" | "failed";
+            /** @description Type of job */
+            job_type: components["schemas"]["JobType"];
+            /** @description Current job status */
+            status: components["schemas"]["JobStatus"];
             /**
              * Created At
              * Format: date-time
@@ -406,7 +283,51 @@ export interface components {
              * @description Webhook URL for notifications
              */
             webhook_url?: string | null;
+            /**
+             * Parameters
+             * @description Parameters for the job
+             */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
         };
+        /** JobCreate */
+        JobCreate: {
+            /**
+             * Job Id
+             * @description Unique job identifier
+             */
+            job_id?: string;
+            /** @description Type of job to create */
+            job_type: components["schemas"]["JobType"];
+            /**
+             * Project Id
+             * @description Project ID that the job is associated with
+             */
+            project_id: string;
+            /**
+             * Webhook Url
+             * @description Optional webhook URL for notifications
+             */
+            webhook_url?: string | null;
+            /**
+             * Parameters
+             * @description Parameters for the job
+             */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * JobStatus
+         * @enum {string}
+         */
+        JobStatus: "queued" | "processing" | "completed" | "failed";
+        /**
+         * JobType
+         * @enum {string}
+         */
+        JobType: "Object" | "Video" | "Audio" | "Image";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -445,209 +366,7 @@ export interface operations {
             };
         };
     };
-    generate_3d_asset_api_generate_3d_asset_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Generate3DAssetRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Generate3DAssetResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_job_status_api_jobs__job_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path: {
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_project_jobs_api_projects__project_id__jobs_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path: {
-                project_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobStatus"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_user_jobs_api_jobs_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: {
-                authorization?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobStatus"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_job_api_jobs_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["JobCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JobStatus"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_ksplat_asset_api_assets__job_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path: {
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_gcs_files_api_list_gcs_files_get: {
+    verify_email_auth_auth_email_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -663,72 +382,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    download_gcs_file_api_download_gcs_file__filename__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                filename: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    upload_to_gcs_api_upload_to_gcs_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_upload_to_gcs_api_upload_to_gcs_post"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -780,6 +433,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_job_api_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_project_jobs_api_jobs__project_id__get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_jobs_api_jobs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_job_api_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_asset_url_api_jobs__job_id__asset_url_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string;
+            };
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetUrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

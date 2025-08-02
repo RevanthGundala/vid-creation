@@ -1,6 +1,98 @@
----
-description: The backend is a FastAPI python server.
-globs:
+# Backend Application Context
+
+## Overview
+This is a FastAPI-based backend server for a video creation platform that provides AI-powered 3D asset generation capabilities. The application uses Firebase for authentication, Firestore for data storage, and Google Cloud Storage for file management.
+
+## Technology Stack
+- **Framework**: FastAPI with Uvicorn
+- **Python Version**: >=3.11
+- **Package Manager**: uv (with pyproject.toml)
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Auth
+- **Storage**: Google Cloud Storage
+- **AI/ML**: Diffusers, Transformers, DSPy for 3D asset generation
+- **Image Processing**: OpenCV
+
+## Project Structure
+```
+backend/
+├── src/
+│   ├── api/           # API route handlers
+│   │   ├── asset.py   # 3D asset generation endpoints
+│   │   ├── auth.py    # Authentication endpoints
+│   │   ├── video.py   # Video processing endpoints
+│   │   ├── webhooks.py # Webhook handlers
+│   │   └── middleware.py # Custom middleware
+│   ├── database/      # Database layer
+│   │   ├── firebase.py # Firebase initialization
+│   │   ├── firestore.py # Firestore operations
+│   │   ├── gcs.py     # Google Cloud Storage
+│   │   └── mock_db.py # Mock database for testing
+│   ├── services/      # Business logic
+│   │   ├── job_processor.py # Job processing logic
+│   │   └── job_service.py # Job management service
+│   ├── schemas/       # Pydantic models
+│   │   ├── asset.py   # Asset-related schemas
+│   │   ├── job.py     # Job-related schemas
+│   │   ├── project.py # Project schemas
+│   │   └── user.py    # User schemas
+│   ├── models/        # ML/AI models
+│   ├── config.py      # Configuration settings
+│   └── main.py        # FastAPI application entry point
+├── tests/             # Test files
+├── scripts/           # Utility scripts
+├── assets/            # Static assets
+└── pyproject.toml     # Project configuration
+```
+
+## Key Features
+1. **3D Asset Generation**: AI-powered generation of 3D assets from text prompts
+2. **Job Management**: Asynchronous job processing with status tracking
+3. **Project Organization**: Multi-project support with job grouping
+4. **Authentication**: Google OAuth integration via Firebase
+5. **File Management**: Cloud storage integration for asset files
+6. **Webhook Support**: External service integration via webhooks
+
+## API Endpoints
+- `POST /auth/google` - Google authentication callback
+- `POST /api/generate-3d-asset` - Generate 3D assets from text prompts
+- `GET /api/jobs/{job_id}` - Get job status
+- `GET /api/projects/{project_id}/jobs` - Get all jobs for a project
+- `GET /` - Health check
+- `GET /health` - Health check endpoint
+
+## Configuration
+The application uses environment variables and a Config class for:
+- GCP Project ID: `vid-creation-671f2`
+- GCP Region: `us-east1`
+- Firestore Database: `k-studio-444118`
+- Development mode settings
+
+## Development Setup
+1. Use `uv` for dependency management
+2. Python 3.11+ required
+3. Firebase configuration required
+4. CORS configured for localhost:3000 (frontend)
+5. Environment variables loaded via dotenv
+
+## Key Dependencies
+- `fastapi>=0.116.1` - Web framework
+- `firebase-admin>=6.4.0` - Firebase integration
+- `diffusers>=0.34.0` - AI model inference
+- `transformers>=4.53.3` - ML model loading
+- `dspy>=2.6.27` - AI programming framework
+- `opencv-python>=4.12.0.88` - Image processing
+- `aiohttp>=3.9.0` - Async HTTP client
+- `python-multipart>=0.0.20` - File upload support
+
+## Architecture Patterns
+- **Service Layer**: Business logic separated in services/
+- **Repository Pattern**: Database operations abstracted in database/
+- **Schema Validation**: Pydantic models for request/response validation
+- **Middleware**: Custom logging and CORS middleware
+- **Async Processing**: Job-based asynchronous asset generation
+
+
 alwaysApply: false
 ---
 

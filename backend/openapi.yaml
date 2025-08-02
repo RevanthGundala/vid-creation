@@ -13,267 +13,16 @@ paths:
           content:
             application/json:
               schema: {}
-  /api/generate-3d-asset:
+  /auth/email:
     post:
-      summary: Generate 3D Asset
-      description: 'Generate a 3D asset based on a text prompt.
-
-
-        This endpoint creates a new job for 3D asset generation and returns
-
-        a job ID that can be used to track the generation progress.'
-      operationId: generate_3d_asset_api_generate_3d_asset_post
-      parameters:
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Generate3DAssetRequest'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Generate3DAssetResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/jobs/{job_id}:
-    get:
-      summary: Get Job Status
-      description: Get the status of a specific job.
-      operationId: get_job_status_api_jobs__job_id__get
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobStatus'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/projects/{project_id}/jobs:
-    get:
-      summary: Get Project Jobs
-      description: Get all jobs for a specific project.
-      operationId: get_project_jobs_api_projects__project_id__jobs_get
-      parameters:
-      - name: project_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Project Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/JobStatus'
-                title: Response Get Project Jobs Api Projects  Project Id  Jobs Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/jobs:
-    get:
-      summary: Get User Jobs
-      description: Get all jobs for the authenticated user.
-      operationId: get_user_jobs_api_jobs_get
-      parameters:
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 50
-          title: Limit
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/JobStatus'
-                title: Response Get User Jobs Api Jobs Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    post:
-      summary: Create Job
-      description: Create a new job of any supported type.
-      operationId: create_job_api_jobs_post
-      parameters:
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobCreate'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobStatus'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/assets/{job_id}:
-    get:
-      summary: Get Ksplat Asset
-      description: Serve a .ksplat file for a specific job.
-      operationId: get_ksplat_asset_api_assets__job_id__get
-      parameters:
-      - name: job_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
+      summary: Verify Email Auth
+      operationId: verify_email_auth_auth_email_post
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/list-gcs-files:
-    get:
-      summary: List Gcs Files
-      description: List all files in the GCS bucket.
-      operationId: list_gcs_files_api_list_gcs_files_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-  /api/download-gcs-file/{filename}:
-    get:
-      summary: Download Gcs File
-      description: Download a file from GCS by filename.
-      operationId: download_gcs_file_api_download_gcs_file__filename__get
-      parameters:
-      - name: filename
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Filename
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/upload-to-gcs:
-    post:
-      summary: Upload To Gcs
-      description: Upload a file to GCS.
-      operationId: upload_to_gcs_api_upload_to_gcs_post
-      parameters:
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Body_upload_to_gcs_api_upload_to_gcs_post'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /api/webhooks/{job_id}/stream:
     get:
       summary: Stream Job Updates
@@ -311,6 +60,178 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/jobs/{job_id}:
+    get:
+      summary: Get Job
+      description: Get a specific job.
+      operationId: get_job_api_jobs__job_id__get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/jobs/{project_id}:
+    get:
+      summary: Get Project Jobs
+      description: Get all jobs for a specific project and user.
+      operationId: get_project_jobs_api_jobs__project_id__get
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response Get Project Jobs Api Jobs  Project Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/jobs:
+    get:
+      summary: Get User Jobs
+      description: Get all jobs for the authenticated user.
+      operationId: get_user_jobs_api_jobs_get
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+                title: Response Get User Jobs Api Jobs Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      summary: Create Job
+      description: Create a new job of any supported type.
+      operationId: create_job_api_jobs_post
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/jobs/{job_id}/asset-url:
+    get:
+      summary: Get Job Asset Url
+      description: 'Dedicated endpoint to get the signed URL for a completed job''s
+        asset.
+
+        This is a separate endpoint from the main job endpoint to avoid bloating the
+        job endpoint with too many responsibilities.'
+      operationId: get_job_asset_url_api_jobs__job_id__asset_url_get
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          type: string
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetUrlResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /:
     get:
       summary: Root
@@ -333,59 +254,27 @@ paths:
               schema: {}
 components:
   schemas:
-    Body_upload_to_gcs_api_upload_to_gcs_post:
+    AssetUrlResponse:
       properties:
-        file:
+        signed_url:
           type: string
-          format: binary
-          title: File
+          title: Signed Url
+        asset_id:
+          type: string
+          title: Asset Id
+        filename:
+          type: string
+          title: Filename
+        storage_path:
+          type: string
+          title: Storage Path
       type: object
       required:
-      - file
-      title: Body_upload_to_gcs_api_upload_to_gcs_post
-    Generate3DAssetRequest:
-      properties:
-        prompt:
-          type: string
-          maxLength: 1000
-          minLength: 1
-          title: Prompt
-          description: Text prompt for 3D asset generation
-        project_id:
-          type: string
-          title: Project Id
-          description: Project ID that the asset belongs to
-        webhook_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Webhook Url
-          description: Optional webhook URL for job status updates
-      type: object
-      required:
-      - prompt
-      - project_id
-      title: Generate3DAssetRequest
-    Generate3DAssetResponse:
-      properties:
-        job_id:
-          type: string
-          title: Job Id
-          description: Unique identifier for the generated project
-        status:
-          type: string
-          enum:
-          - pending
-          - processing
-          - completed
-          - failed
-          title: Status
-          description: Current status of the asset generation
-      type: object
-      required:
-      - job_id
-      - status
-      title: Generate3DAssetResponse
+      - signed_url
+      - asset_id
+      - filename
+      - storage_path
+      title: AssetUrlResponse
     HTTPValidationError:
       properties:
         detail:
@@ -395,32 +284,7 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    JobCreate:
-      properties:
-        job_type:
-          type: string
-          enum:
-          - 3d
-          - video
-          title: Job Type
-          description: Type of job to create
-        parameters:
-          additionalProperties: true
-          type: object
-          title: Parameters
-          description: Job parameters
-        webhook_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Webhook Url
-          description: Optional webhook URL for notifications
-      type: object
-      required:
-      - job_type
-      - parameters
-      title: JobCreate
-    JobStatus:
+    Job:
       properties:
         job_id:
           type: string
@@ -435,20 +299,10 @@ components:
           title: User Id
           description: User who created the job
         job_type:
-          type: string
-          enum:
-          - 3d
-          - video
-          title: Job Type
+          $ref: '#/components/schemas/JobType'
           description: Type of job
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - completed
-          - failed
-          title: Status
+          $ref: '#/components/schemas/JobStatus'
           description: Current job status
         created_at:
           type: string
@@ -499,6 +353,13 @@ components:
           - type: 'null'
           title: Webhook Url
           description: Webhook URL for notifications
+        parameters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Parameters
+          description: Parameters for the job
       type: object
       required:
       - job_id
@@ -508,7 +369,54 @@ components:
       - status
       - created_at
       - modified_at
+      title: Job
+    JobCreate:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+          description: Unique job identifier
+        job_type:
+          $ref: '#/components/schemas/JobType'
+          description: Type of job to create
+        project_id:
+          type: string
+          title: Project Id
+          description: Project ID that the job is associated with
+        webhook_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Webhook Url
+          description: Optional webhook URL for notifications
+        parameters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Parameters
+          description: Parameters for the job
+      type: object
+      required:
+      - job_type
+      - project_id
+      title: JobCreate
+    JobStatus:
+      type: string
+      enum:
+      - queued
+      - processing
+      - completed
+      - failed
       title: JobStatus
+    JobType:
+      type: string
+      enum:
+      - Object
+      - Video
+      - Audio
+      - Image
+      title: JobType
     ValidationError:
       properties:
         loc:

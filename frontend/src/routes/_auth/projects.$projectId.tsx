@@ -5,6 +5,12 @@ import { toast } from 'sonner'
 import { Editor } from '@/components/editor'
 import ChatBox from '@/components/ChatBox'
 import type { Project } from '../../hooks/use-project'
+import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 
 export const Route = createFileRoute('/_auth/projects/$projectId')({
   component: ProjectComponent,
@@ -38,7 +44,7 @@ function ProjectComponent() {
   
   // Find the latest completed 3D asset job
   const latestCompletedJob = jobs
-    .filter(job => job.job_type === "3d" && job.status === "completed")
+    .filter(job => job.job_type === "Object" && job.status === "completed")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
   
   // Generate asset URL for the latest completed job (using public endpoint for development)
@@ -70,13 +76,13 @@ function ProjectComponent() {
   }
 
   // Show loading state
-  if (isLoading) {
-    return (
-      <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
-        <div className="text-xl">Loading project...</div>
-      </div>
-    )
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
+  //       <div className="text-xl">Loading project...</div>
+  //     </div>
+  //   )
+  // }
 
   // Show error state
   if (error) {
@@ -97,23 +103,23 @@ function ProjectComponent() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#282c34] text-white">
-      {/* Project info header */}
-      <div className="absolute top-4 left-4 z-50">
-        <h1 className="text-2xl font-bold">{project.name}</h1>
-        <p className="text-sm text-gray-400">Project ID: {project.project_id}</p>
-        {jobs.length > 0 && (
-          <p className="text-sm text-gray-400">{jobs.length} job{jobs.length !== 1 ? 's' : ''} in this project</p>
-        )}
-      </div>
-
-      {/* Editor takes full screen */}
-      <Editor assetUrl={assetUrl} />
-      
-      {/* ChatBox positioned as overlay */}
-      <div className="absolute bottom-36 left-0 right-0 flex justify-center z-50">
+    <>
+     <div className="[--header-height:calc(--spacing(14))]">
+      <SidebarProvider className="flex flex-col">
+        <SiteHeader title={project.name} />
+        <div className="flex flex-1">
+          <AppSidebar />
+          <SidebarInset>
+            <div className="flex flex-1 flex-col relative">
+              <Editor assetUrl={assetUrl} />
+             <div className="absolute bottom-36 left-0 right-0 flex justify-center z-50">
         <ChatBox onSubmit={handleSubmit} />
-      </div>
+      </div> 
+            </div>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
     </div>
+    </>
   )
 }

@@ -1,7 +1,5 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Check if Firebase environment variables are properly configured
 const requiredEnvVars = [
@@ -37,11 +35,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
 
 // Connect to emulators in development mode
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && import.meta.env.VITE_ENVIRONMENT === 'development') {
   console.log('🔧 Connecting to Firebase emulators...');
   
   // Connect to Auth emulator
@@ -49,11 +45,13 @@ if (import.meta.env.DEV) {
     disableWarnings: true
   });
   
-  // Connect to Firestore emulator
-  connectFirestoreEmulator(db, 'localhost', 8080);
+  // // Connect to Firestore emulator
+  // connectFirestoreEmulator(db, 'localhost', 8080);
   
-  // Connect to Storage emulator
-  connectStorageEmulator(storage, 'localhost', 9199);
+  // // Connect to Storage emulator
+  // connectStorageEmulator(storage, 'localhost', 9199);
   
   console.log('✅ Connected to Firebase emulators');
+} else {
+  console.log('🚀 Using production Firebase services');
 } 

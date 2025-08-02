@@ -1,13 +1,15 @@
+"""
+Firebase authentication service.
+Provides authentication functionality without database operations.
+"""
 import os
 import firebase_admin
 from firebase_admin import auth, initialize_app, credentials
-from firebase_admin import firestore
 from fastapi import HTTPException, status, Depends, Header
 
-class FirebaseService:
-    """Firebase service class with static methods for authentication and initialization."""
-    
-    _firestore_client = None
+
+class FirebaseAuthService:
+    """Firebase authentication service with static methods for auth operations."""
     
     @staticmethod
     def initialize_firebase():
@@ -19,27 +21,26 @@ class FirebaseService:
                 return
             
             # Check if we're in development mode with emulators
-            if os.getenv('ENVIRONMENT', 'development') == 'development':
+            if os.getenv('APP_ENV', 'development') == 'development':
                 print("🔧 Running in development mode with Firebase emulators")
-                
-                # Set emulator environment variables
-                os.environ['FIREBASE_AUTH_EMULATOR_HOST'] = 'localhost:9099'
-                os.environ['FIRESTORE_EMULATOR_HOST'] = 'localhost:8080'
+
+                # Set emulator environment variables BEFORE any Firebase imports or initialization
+                os.environ['FIREBASE_AUTH_EMULATOR_HOST'] = '127.0.0.1:9099'
+                os.environ['FIRESTORE_EMULATOR_HOST'] = '127.0.0.1:8080'
+                os.environ['FIREBASE_STORAGE_EMULATOR_HOST'] = '127.0.0.1:9199'
                 
                 # Set the project ID environment variable that Firebase Admin SDK expects
                 project_id = os.getenv("FIREBASE_PROJECT_ID", "vid-creation-671f2")
                 os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
                 
-                # For emulator mode, we need to initialize with a project ID but no credentials
-                # This is a special case for Firebase emulators
+                # For emulator mode, initialize with project ID only
                 try:
-                    # Try to initialize with just the project ID for emulator mode
                     initialize_app(options={
                         'projectId': project_id
                     })
                     print(f"✅ Firebase Admin SDK initialized for emulator mode with project: {project_id}")
                 except Exception as e:
-                    print(f"❌ Failed to initialize Firebase for emulator mode: {e}")
+                    print(f"❌ Failed to initialize Firebase with dummy credentials: {e}")
                     print("Running without Firebase authentication")
             else:
                 # Production mode - use service account credentials
@@ -85,22 +86,19 @@ class FirebaseService:
             )
         
         id_token = authorization.split(' ')[1]
-        return FirebaseService.verify_firebase_token(id_token)
+        return FirebaseAuthService.verify_firebase_token(id_token)
 
     @staticmethod
-    def get_firestore_client() -> firestore.Client:
-        """Get singleton Firestore client."""
-        if FirebaseService._firestore_client is None:
-            try:
-                # Make sure Firebase is initialized first
-                if not firebase_admin._apps:
-                    FirebaseService.initialize_firebase()
-                
-                FirebaseService._firestore_client = firestore.Client()
-                print("✅ Firestore client initialized successfully")
-                return FirebaseService._firestore_client
-            except Exception as e:
-                print(f"❌ Failed to initialize Firestore client: {e}")
-                print("Falling back to mock implementation")
-                return None
-        return FirebaseService._firestore_client
+    def get_auth_dependency():
+        """
+        FastAPI dependency function that provides an authenticated user from Firebase Auth.
+        
+        Returns:
+            dict: Decoded Firebase token with user information
+            
+        Example:
+            @app.get("/profile/")
+            def get_profile(user: dict = Depends(FirebaseAuthService.get_auth_dependency)):
+                return {"user_id": user["uid"]}
+        """
+        return FirebaseAuthService.firebase_auth_dependency 

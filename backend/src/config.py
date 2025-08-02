@@ -9,6 +9,6 @@ class Config:
     gcp_firestore_database_id: str = "k-studio-444118"
     gcp_firestore_database_location: str = "nam5"
     gcp_firestore_database_type: str = "FIRESTORE_NATIVE"
-
+    starting_credits: int = 10
 
 config = Config()
