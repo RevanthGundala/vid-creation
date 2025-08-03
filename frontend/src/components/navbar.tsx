@@ -9,8 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { auth } from '@/utils/firebase';
-import { signOut } from 'firebase/auth';
 import { useNavigate } from '@tanstack/react-router';
 
 export function Navbar() {

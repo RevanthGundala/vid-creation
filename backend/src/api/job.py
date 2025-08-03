@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from src.dependencies.dependencies_repository import get_authenticated_user
-from src.dependencies.dependencies_request import get_job_service, get_job_processor
+from src.dependencies.dependencies_request import get_job_service, get_job_processor, get_current_user_from_token
 from src.services.job_service import JobService
 from src.services.job_processor import JobProcessor
 from src.schemas.job import JobStatus, JobCreate, Job
 from pydantic import BaseModel
+from src.schemas.user import User
 
 router = APIRouter()
 
@@ -17,7 +17,7 @@ class AssetUrlResponse(BaseModel):
 @router.get("/api/jobs/{job_id}", response_model=Job)
 async def get_job(
     job_id: str, 
-    user: dict = Depends(get_authenticated_user),
+    user: User = Depends(get_current_user_from_token),
     job_service: JobService = Depends(get_job_service)
 ):
     """
@@ -38,7 +38,7 @@ async def get_job(
 async def get_project_jobs(
     project_id: str, 
     limit: int = 50,
-    user: dict = Depends(get_authenticated_user),
+    user: User = Depends(get_current_user_from_token),
     job_service: JobService = Depends(get_job_service)
 ):
     """
@@ -53,7 +53,7 @@ async def get_project_jobs(
 @router.get("/api/jobs", response_model=list[Job])
 async def get_user_jobs(
     limit: int = 50,
-    user: dict = Depends(get_authenticated_user),
+    user: User = Depends(get_current_user_from_token),
     job_service: JobService = Depends(get_job_service)
 ):
     """
@@ -68,7 +68,7 @@ async def get_user_jobs(
 async def create_job(
     job_request: JobCreate,
     background_tasks: BackgroundTasks,
-    user: dict = Depends(get_authenticated_user),
+    user: User = Depends(get_current_user_from_token),
     job_service: JobService = Depends(get_job_service),
     job_processor: JobProcessor = Depends(get_job_processor),
 ):
@@ -93,7 +93,7 @@ async def create_job(
 @router.get("/api/jobs/{job_id}/asset-url", response_model=AssetUrlResponse)
 async def get_job_asset_url(
     job_id: str,
-    user: dict = Depends(get_authenticated_user),
+    user: User = Depends(get_current_user_from_token),
     job_service: JobService = Depends(get_job_service),
 ):
     """

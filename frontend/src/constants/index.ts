@@ -11,3 +11,5 @@ export const colors = {
   muted: '#6B7280',     // gray-500
   border: '#22262A',    // dark border
 };
+
+export const SESSION_STORAGE_KEY = 'auth_session';

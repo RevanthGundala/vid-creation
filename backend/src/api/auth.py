@@ -1,42 +1,69 @@
-from src.config import config
-from fastapi import Request, HTTPException, APIRouter, Depends
-from src.dependencies.dependencies_repository import get_user_repository
-from src.database.repositories.base import UserRepository
+from fastapi import Request, APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from src.repositories.base import DatabaseRepository
+from src.dependencies.dependencies_request import get_auth_service, get_user_repository, get_current_user_from_token
+from src.services.auth_service import AuthService
 from src.schemas.user import User
-from src.database.firebase_auth import FirebaseAuthService
 
-router = APIRouter()    
+router = APIRouter()
 
-@router.post("/auth/google")
-async def google_auth_callback(
-    request: Request,
-    user_repo: UserRepository = Depends(get_user_repository)
+@router.get("/api/auth/login")
+async def login(
+    auth_service: AuthService = Depends(get_auth_service)
 ):
-    decoded_token = await FirebaseAuthService.verify_firebase_token(request.headers.get('Authorization'))
-    user_id = decoded_token.get('uid')
-    if not user_id:
-        raise HTTPException(status_code=400, detail='No UID in Firebase token')
-    
-    # Check if user exists using repository abstraction
-    existing_user = await user_repo.get_by_id(user_id)
-    if not existing_user:
-        user_data = User(user_id=user_id, video_ids=[], credits=config.starting_credits).dict()
-        await user_repo.create(user_data)
-    return decoded_token
+    """
+    Login endpoint.
+    """
+    return await auth_service.login()
 
-@router.post("/auth/email")
-async def verify_email_auth(
+@router.get("/api/auth/callback")
+async def handle_callback(
     request: Request,
-    user_repo: UserRepository = Depends(get_user_repository)
+    auth_service: AuthService = Depends(get_auth_service),
+    user_repo: DatabaseRepository = Depends(get_user_repository)
+) -> JSONResponse:
+    """
+    Handle the callback from the AuthKit login flow.
+    Returns access_token and refresh_token.
+    """
+    return await auth_service.handle_callback(request, user_repo)
+
+@router.get("/api/auth/me")
+async def get_current_user(
+    current_user: User = Depends(get_current_user_from_token)
 ):
-    decoded_token = await FirebaseAuthService.verify_firebase_token(request.headers.get('Authorization'))
-    user_id = decoded_token.get('uid')
-    if not user_id:
-        raise HTTPException(status_code=400, detail='No UID in Firebase token')
-    
-    # Check if user exists using repository abstraction
-    existing_user = await user_repo.get_by_id(user_id)
-    if not existing_user:
-        user_data = User(user_id=user_id, video_ids=[], credits=config.starting_credits).dict()
-        await user_repo.create(user_data)
-    return decoded_token
+    """
+    Get current user information.
+    This endpoint requires a valid Bearer token.
+    """
+    return current_user
+
+@router.post("/api/auth/refresh")
+async def refresh_token(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    Refresh an access token using a refresh token.
+    Expects refresh_token in request body.
+    """
+    try:
+        body = await request.json()
+        refresh_token = body.get("refresh_token")
+        if not refresh_token:
+            raise HTTPException(status_code=400, detail="refresh_token is required")
+        
+        return await auth_service.refresh_access_token(refresh_token)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid request body")
+
+@router.get("/api/auth/logout")
+async def logout(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    Logout endpoint.
+    """
+    return await auth_service.logout(request)

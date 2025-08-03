@@ -1,23 +1,17 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { auth } from '../utils/firebase';
-import { Navbar } from '../components/navbar';
+import { getAccessToken } from '../hooks/use-session-storage';
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: async () => {
-    // Wait for auth state to be determined
-    return new Promise((resolve) => {
-      const unsubscribe = auth.onAuthStateChanged((user) => {
-        unsubscribe();
-        if (!user) {
-          throw redirect({ to: '/login' });
-        }
-        resolve(undefined);
-      });
-    });
+    // TODO: use the actual session storage hook to check for access token
+    const accessToken = getAccessToken();
+    
+    if (!accessToken) {
+      throw redirect({ to: '/' });
+    }
   },
   component: () => (
     <>
-      {/* <Navbar /> */}
       <Outlet />
     </>
   ),

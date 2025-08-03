@@ -1,26 +1,71 @@
-import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from "react";
-import { auth } from "../utils/firebase";
-import { onAuthStateChanged, signOut as firebaseSignOut, type User } from "firebase/auth";
+import { createContext, useContext, type ReactNode } from "react";
+import { useSessionStorage } from "../hooks/use-session-storage";
 
-const AuthContext = createContext<{ user: User | null; signOut: () => Promise<void> } | null>(null);
+// Define a generic user interface that works with WorkOS
+interface WorkOSUser {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const AuthContext = createContext<{ 
+  user: WorkOSUser | null; 
+  signOut: () => Promise<void>;
+  setUser: (user: WorkOSUser | null) => void;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+} | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(auth.currentUser);
+  const { 
+    session, 
+    isLoading, 
+    setSession, 
+    clearSession, 
+    isAuthenticated: checkAuth 
+  } = useSessionStorage();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
-      setUser(firebaseUser);
-    });
-    return unsubscribe;
-  }, []);
+  const setUser = (user: WorkOSUser | null) => {
+    if (user && session?.tokens) {
+      // Update user in existing session
+      setSession({
+        ...session,
+        user,
+      });
+    } else if (user) {
+      // Create new session with user (tokens should be set separately)
+      console.warn('Setting user without tokens. Use setSession with full session data instead.');
+    } else {
+      // Clear session
+      clearSession();
+    }
+  };
 
-  const signOut = useCallback(() => firebaseSignOut(auth), []);
+  const signOut = async () => {
+    clearSession();
+  };
 
-  return <AuthContext.Provider value={{ user, signOut }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user: session?.user || null,
+      signOut,
+      setUser,
+      isAuthenticated: checkAuth(),
+      isLoading,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
   return context;
 }

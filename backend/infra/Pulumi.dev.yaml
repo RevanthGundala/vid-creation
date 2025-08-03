@@ -1,0 +1,5 @@
+config:
+  gcp:project: vid-creation-466903
+  gcp:region: us-central1
+  infra:environment: development
+  infra:region: us-central1

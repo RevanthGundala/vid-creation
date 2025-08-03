@@ -1,0 +1,73 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# Hosted UI
+
+
+## Introduction
+
+Implementing authentication flows that handle every possible error state and edge case across multiple identity providers can be a daunting task. AuthKit makes this easy by providing a hosted, pre-built, customizable authentication UI with automatic handling of:
+
+- Sign up, sign in, password reset, and [email verification](/authkit/email-verification) flows.
+- Enterprise [SSO](/authkit/sso) routing and [MFA](/authkit/mfa) enrollment.
+- Automatic bot detection and blocking, to protect against brute force attacks.
+- Customizable [domain](/custom-domains/authkit) and [branding](/authkit/branding).
+
+![AuthKit sign-in UI](https://images.workoscdn.com/images/4d736ca3-eec8-4a90-bd14-2530c4210415.png?auto=format&fit=clip&q=80)
+
+## Authentication flow
+
+AuthKit is conceptually similar to a [Social Login (OAuth)](/authkit/social-login) experience, but with the added benefit of being able to authenticate users with any identity provider.
+
+AuthKit sits outside of your application code. When a user initiates a sign-in request, your application redirects them to the AuthKit URL. The user then completes the authentication process with WorkOS before being returned to the application.
+
+Your application will exchange the resulting authorization code to retrieve an authenticated [User object](/reference/authkit/user) and handle the session.
+
+![AuthKit authentication flow diagram](https://images.workoscdn.com/images/0b3265fa-a209-4ca7-beaf-7d2514a3e00a.png?auto=format&fit=clip&q=80)[border=false]
+
+> The AuthKit flow abstracts away many of the UX and WorkOS API calling concerns automatically, for more guidance on integrating with AuthKit, see the [Quick Start](/authkit) guide.
+
+AuthKit also provides a signup flow for creating users. Available options are determined by the configured [authentication methods](/authkit/hosted-ui/authentication-methods). If a user’s email address is associated with an SSO connection, they will automatically be redirected to sign up via their IdP.
+
+## Authentication methods
+
+AuthKit's hosted UI supports all of the authentication methods available and will automatically adjust the available options depending on the configured methods in the _Authentication_ section of the [WorkOS Dashboard](https://dashboard.workos.com).
+
+![Dashboard displaying available authentication methods](https://images.workoscdn.com/images/ea3b2c3b-723e-462c-aa10-6b1cec1b635f.png?auto=format&fit=clip&q=80)
+
+Email + Password authentication is enabled by default, though set up may be required to enable additional methods. See the relevant feature section for more information:
+
+- [Single Sign-On](/authkit/sso)
+- [Email + Password](/authkit/email-password)
+- [Social Login](/authkit/social-login)
+- [Multi-Factor Auth](/authkit/mfa)
+- [Magic Auth](/authkit/magic-auth)
+
+## Custom OAuth scopes
+
+AuthKit offers support for custom OAuth scopes for Google, Microsoft, GitHub, GitLab, and Xero integrations. This allows you to request specific permissions when accessing user profile data from these providers. For instance, requesting access to read Google Calendar events or retrieve emails from a Microsoft account. See the relevant provider section for more information:
+
+- [Google](/integrations/google-oauth/configure-additional-oauth-scopes-optional)
+- [Microsoft](/integrations/microsoft-oauth/configure-additional-oauth-scopes-optional)
+- [GitHub](/integrations/github-oauth/configure-additional-oauth-scopes-optional)
+- [GitLab](/integrations/gitlab-oauth/configure-additional-oauth-scopes-optional)
+- [Xero](/integrations/xero-oauth/configure-additional-oauth-scopes-optional)
+
+---
+
+## Integrating
+
+Integration into your app is quick and easy, though the route you choose varies depending on your specific requirements:
+
+### (A) Integrate with AuthKit's Hosted UI
+
+In just a few lines of code, you can add AuthKit to your app and start authenticating users. See the [quick start](/authkit) guide for more information.
+
+### (B) Build your own authentication flows
+
+While the hosted solution is the fastest way to get started, if you’d prefer to build and manage your own authentication UI, you can do so via the [AuthKit API](/reference/authkit).
+
+Examples of building custom UI are [available on GitHub](https://github.com/workos/authkit).

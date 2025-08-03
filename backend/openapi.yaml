@@ -3,20 +3,35 @@ info:
   title: FastAPI
   version: 0.1.0
 paths:
-  /auth/google:
-    post:
-      summary: Google Auth Callback
-      operationId: google_auth_callback_auth_google_post
+  /api/auth/login:
+    get:
+      summary: Login
+      description: Login endpoint.
+      operationId: login_api_auth_login_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema: {}
-  /auth/email:
+  /api/auth/me:
+    get:
+      summary: Get Current User
+      description: 'Get current user information.
+
+        This endpoint requires a valid AuthKit token.'
+      operationId: get_current_user_api_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/auth/logout:
     post:
-      summary: Verify Email Auth
-      operationId: verify_email_auth_auth_email_post
+      summary: Logout
+      description: Logout endpoint.
+      operationId: logout_api_auth_logout_post
       responses:
         '200':
           description: Successful Response
@@ -72,12 +87,6 @@ paths:
         schema:
           type: string
           title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -110,12 +119,6 @@ paths:
           type: integer
           default: 50
           title: Limit
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -145,12 +148,6 @@ paths:
           type: integer
           default: 50
           title: Limit
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -171,13 +168,6 @@ paths:
       summary: Create Job
       description: Create a new job of any supported type.
       operationId: create_job_api_jobs_post
-      parameters:
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -213,12 +203,6 @@ paths:
         schema:
           type: string
           title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          type: string
-          title: Authorization
       responses:
         '200':
           description: Successful Response

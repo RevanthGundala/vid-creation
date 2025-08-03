@@ -29,8 +29,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { auth } from "@/utils/firebase"
-import { signOut } from "firebase/auth"
 import { useNavigate } from "@tanstack/react-router"
 
 export function NavUser({

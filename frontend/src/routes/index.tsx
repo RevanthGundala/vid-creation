@@ -196,7 +196,9 @@ const ClickableTextGroup = () => {
   
   const handleClick = () => {
     // Navigate to your desired route
-    navigate({ to: user ? "/projects" : "/login" }) // Change this to your desired route
+    const WORKOS_LOGIN_PAGE = "https://resolute-chalice-02-staging.authkit.app/sign-up?redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Fauth%2Fcallback&authorization_session_id=01K1PF2W2F9HMJSDVVY7W1J6NE"
+    window.location.href = WORKOS_LOGIN_PAGE
+    // navigate({ to: user ? "/projects" : "/" }) // Change this to your desired route
   }
 
   return (

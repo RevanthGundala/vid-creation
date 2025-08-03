@@ -1,6 +1,5 @@
 import { $api } from "../hooks";
 import { toast } from "sonner";
-import { auth } from "../utils/firebase";
 import { useJobStatus } from "./use-job-status";
 import { useState } from "react";
 import type { components } from "../types/api";
@@ -30,10 +29,8 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
 
     const generate3dAssetMutation = $api.useMutation("post", "/api/jobs", {
         onMutate: (variables) => {
-            console.log('🔄 Mutation started with variables:', variables);
         },
         onSuccess: (data: Job) => { // Changed to Job type
-            console.log("✅ Job created:", data);
             // The backend returns job_id, not project_id
             setCurrentJobId(data.job_id);
             options?.onSuccess?.(data);
@@ -78,10 +75,6 @@ export function use3dAsset(options?: Generate3dAssetOptions) {
             if (!project_id) {
                 throw new Error("Project ID is required");
             }
-            
-            console.log('API URL:', import.meta.env.VITE_API_URL);
-            console.log('Current user:', auth.currentUser?.uid);
-            console.log('About to call mutation with:', { prompt, project_id });
             
             const requestBody: JobCreate = {
                 project_id,

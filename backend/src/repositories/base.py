@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, List, Generic, TypeVar
 
 T = TypeVar('T')
 
-class BaseRepository(ABC, Generic[T]):
+class DatabaseRepository(ABC, Generic[T]):
     """Base repository interface for common database operations."""
     
     @abstractmethod
@@ -41,7 +41,7 @@ class BaseRepository(ABC, Generic[T]):
         pass
 
 
-class StorageRepository(ABC):
+class FileStorageRepository(ABC, Generic[T]):
     """Base repository interface for file storage operations."""
     
     @abstractmethod
@@ -78,24 +78,3 @@ class StorageRepository(ABC):
     async def generate_download_url(self, filename: str, expiration: Optional[int] = None) -> str:
         """Generate a download URL for a file."""
         pass
-
-
-# Specific repository interfaces for different entity types
-class UserRepository(BaseRepository[Dict[str, Any]]):
-    """Repository interface for user operations."""
-    pass
-
-
-class JobRepository(BaseRepository[Dict[str, Any]]):
-    """Repository interface for job operations."""
-    pass
-
-
-class ProjectRepository(BaseRepository[Dict[str, Any]]):
-    """Repository interface for project operations."""
-    pass
-
-
-class AssetRepository(BaseRepository[Dict[str, Any]]):
-    """Repository interface for asset operations."""
-    pass 

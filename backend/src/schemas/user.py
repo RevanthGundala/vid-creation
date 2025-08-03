@@ -1,7 +1,10 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 class User(BaseModel):
     user_id: str
-    video_ids: List[str] = Field(default_factory=list)
-    credits: int 
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    credits: int = 0
+    profile_picture_url: Optional[str] = None

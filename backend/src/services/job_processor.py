@@ -1,20 +1,17 @@
-import asyncio
 import logging
-import os
-import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any
+from src.repositories.base import FileStorageRepository
 from src.services.job_service import JobService
-from src.schemas.job import JobType, JobUpdate, JobStatus, JobCreate
-from src.dependencies.dependencies_repository import get_storage_repository
+from src.schemas.job import JobType, JobUpdate, JobStatus
 
 logger = logging.getLogger(__name__)
 
 class JobProcessor:
-    def __init__(self, job_service: JobService):
+    def __init__(self, job_service: JobService, file_storage: FileStorageRepository):
         self.job_service = job_service
-        self.storage_service = get_storage_repository()
+        self.file_storage = file_storage
         self.assets_dir = Path("assets")  # Directory for temporary asset files
         
     async def process_3d_asset_job(self, job_type: JobType, job_id: str, parameters: Dict[str, Any]):
@@ -46,7 +43,7 @@ class JobProcessor:
             # Upload the generated asset to Firebase Storage
             storage_path = f"assets/{job_id}/{output_filename}"
             
-            upload_result = await self.storage_service.upload_file(
+            upload_result = await self.file_storage.upload_file(
                 file_content, 
                 storage_path, 
                 content_type="application/octet-stream"

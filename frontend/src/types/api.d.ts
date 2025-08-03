@@ -4,24 +4,48 @@
  */
 
 export interface paths {
-    "/auth/google": {
+    "/api/auth/login": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Login
+         * @description Login endpoint.
+         */
+        get: operations["login_api_auth_login_get"];
         put?: never;
-        /** Google Auth Callback */
-        post: operations["google_auth_callback_auth_google_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/auth/email": {
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Current User
+         * @description Get current user information.
+         *     This endpoint requires a valid AuthKit token.
+         */
+        get: operations["get_current_user_api_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/logout": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,8 +54,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Verify Email Auth */
-        post: operations["verify_email_auth_auth_email_post"];
+        /**
+         * Logout
+         * @description Logout endpoint.
+         */
+        post: operations["logout_api_auth_logout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -346,7 +373,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    google_auth_callback_auth_google_post: {
+    login_api_auth_login_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -366,7 +393,27 @@ export interface operations {
             };
         };
     };
-    verify_email_auth_auth_email_post: {
+    get_current_user_api_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    logout_api_auth_logout_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -440,9 +487,7 @@ export interface operations {
     get_job_api_jobs__job_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string;
-            };
+            header?: never;
             path: {
                 job_id: string;
             };
@@ -475,9 +520,7 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: {
-                authorization?: string;
-            };
+            header?: never;
             path: {
                 project_id: string;
             };
@@ -510,9 +553,7 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: {
-                authorization?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -541,9 +582,7 @@ export interface operations {
     create_job_api_jobs_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -576,9 +615,7 @@ export interface operations {
     get_job_asset_url_api_jobs__job_id__asset_url_get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string;
-            };
+            header?: never;
             path: {
                 job_id: string;
             };

@@ -1,16 +1,16 @@
 import aiohttp
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional
 from uuid import uuid4
+from src.repositories.base import DatabaseRepository
 from src.schemas.job import JobStatus, JobUpdate, WebhookNotification, Job, JobCreate
-from src.dependencies.dependencies_repository import get_job_repository
 
 logger = logging.getLogger(__name__)
 
 class JobService:
-    def __init__(self):
-        self.db = get_job_repository()
+    def __init__(self, job_repo: DatabaseRepository[Job]):
+        self.db = job_repo
     
     async def create_job(
         self, 
