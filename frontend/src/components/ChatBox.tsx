@@ -4,9 +4,10 @@ import { Button } from './ui/button'
 
 interface ChatBoxProps {
   onSubmit: (prompt: string) => void
+  errorMessage?: string | null
 }
 
-export default function ChatBox({ onSubmit }: ChatBoxProps) {
+export default function ChatBox({ onSubmit, errorMessage }: ChatBoxProps) {
   const [messages, setMessages] = useState<string[]>([])
   const [model, setModel] = useState<string>('gpt-4o')
   const [prompt, setPrompt] = useState<string>('')
@@ -14,6 +15,7 @@ export default function ChatBox({ onSubmit }: ChatBoxProps) {
   // Submit on button click
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!prompt.trim()) return
     setPrompt('')
     onSubmit(prompt)
   }
@@ -22,6 +24,7 @@ export default function ChatBox({ onSubmit }: ChatBoxProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      if (!prompt.trim()) return
       const form = e.currentTarget.closest('form')
       if (form) {
         form.requestSubmit()
@@ -32,6 +35,12 @@ export default function ChatBox({ onSubmit }: ChatBoxProps) {
   return (
     <div className="w-full max-w-4xl bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {errorMessage && (
+          <div className="bg-red-900/50 border border-red-700 text-red-200 p-3 rounded text-sm">
+            <div className="font-semibold">⚠️ Issue Detected</div>
+            <div>{errorMessage}</div>
+          </div>
+        )}
         <div className="relative">
           <Textarea 
             placeholder="Build a 3D model of a cat..." 
@@ -44,7 +53,12 @@ export default function ChatBox({ onSubmit }: ChatBoxProps) {
           />
           <button
             type="submit"
-            className="absolute bottom-2 right-2 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
+            disabled={!prompt.trim()}
+            className={`absolute bottom-2 right-2 p-2 rounded-full transition-colors ${
+              !prompt.trim() 
+                ? 'bg-gray-600 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

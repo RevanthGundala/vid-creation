@@ -34,15 +34,15 @@ class JobProcessor:
             
             # TODO: Add actual 3D generation here
             # For now, use an example K-Splat file
-            example_ksplat_path = self.assets_dir / "ksplat" / "example.ksplat"
-            if example_ksplat_path.exists():
-                with open(example_ksplat_path, 'rb') as f:
+            truck_ksplat_path = self.assets_dir / "ksplat" / "truck.ksplat"
+            if truck_ksplat_path.exists():
+                with open(truck_ksplat_path, 'rb') as f:
                     file_content = f.read()
-                logger.info(f"Using example K-Splat file: {example_ksplat_path}")
+                logger.info(f"Using truck K-Splat file: {truck_ksplat_path}")
             else:
                 # Fallback to placeholder if example file doesn't exist
-                file_content = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09'  # Binary data
-                logger.warning(f"Example K-Splat file not found, using placeholder content for {output_filename}")
+                logger.warning(f"Truck K-Splat file not found, using placeholder content for {output_filename}")
+                raise FileNotFoundError(f"Truck K-Splat file not found: {truck_ksplat_path}")
 
             # Upload the generated asset to Firebase Storage
             storage_path = f"assets/{job_id}/{output_filename}"

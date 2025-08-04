@@ -78,6 +78,7 @@ for api in apis:
 # Create a GCS bucket with proper configuration
 bucket = gcp.storage.Bucket('vid-creation-bucket',
     location=region,
+    force_destroy=True,
     uniform_bucket_level_access=True,
     public_access_prevention='enforced',
     versioning={

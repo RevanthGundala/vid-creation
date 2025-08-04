@@ -136,13 +136,7 @@ class GCPFirestoreRepository(DatabaseRepository[Dict[str, Any]]):
     
     async def upsert(self, entity: Dict[str, Any]) -> Dict[str, Any]:
         """Upsert an entity into Firestore."""
-        user_id = entity.get("user_id")
-        if not user_id:
-            raise ValueError("Entity must have a 'user_id' field to upsert")
-        existing_entity = await self.get_by_id(user_id)
-        if existing_entity: 
-            return await self.update(user_id, entity)
-        return await self.create(entity)
+        return await self.update(entity["user_id"], entity)
     
 
 class GCPFileStorageRepository(FileStorageRepository[Dict[str, Any]]):

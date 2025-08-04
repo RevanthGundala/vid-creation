@@ -1,13 +1,15 @@
-import { GaussianSplat } from "../splat/GaussianSplat";
+import { GaussianSplatDirectURL } from "../splat/GaussianSplatDirectURL";
 
 interface EditorProps {
   assetUrl?: string;
 }
 
 export function Editor({ assetUrl }: EditorProps) {
+  console.log('🎨 Editor component rendered with assetUrl:', assetUrl);
+  
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white">
-      <GaussianSplat assetUrl={assetUrl} />
+      <GaussianSplatDirectURL assetUrl={assetUrl} />
     </div>
   );
 }

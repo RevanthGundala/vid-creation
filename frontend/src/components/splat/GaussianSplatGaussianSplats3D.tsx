@@ -1,28 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
-import { SplatMesh } from '@sparkjsdev/spark';
+import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
 
 interface GaussianSplatProps {
   assetUrl?: string;
 }
 
-export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
-  console.log('🎬 SparkJS GaussianSplat component rendered with assetUrl:', assetUrl);
+export function GaussianSplatGaussianSplats3D({ assetUrl }: GaussianSplatProps) {
+  console.log('🎬 GaussianSplats3D component rendered with assetUrl:', assetUrl);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const splatMeshRef = useRef<SplatMesh | null>(null);
-  const animationIdRef = useRef<number | null>(null);
+  const viewerRef = useRef<GaussianSplats3D.Viewer | undefined>(undefined);
   const [fileFormat, setFileFormat] = useState<string>('Unknown');
   const [fileSize, setFileSize] = useState<number>(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Separate effect for SparkJS scene creation (runs only once)
+  // Separate effect for viewer creation (runs only once)
   useEffect(() => {
-    console.log('SparkJS GaussianSplat component mounted');
+    console.log('GaussianSplats3D component mounted');
     
     if (!containerRef.current) {
       console.error('Container ref is null');
@@ -30,104 +25,48 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
     }
 
     try {
-      console.log('Creating SparkJS scene...');
+      console.log('Creating GaussianSplats3D viewer...');
       
-      // Create scene
-      sceneRef.current = new THREE.Scene();
-      
-      // Add some lighting
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
-      sceneRef.current.add(ambientLight);
-      
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(1, 1, 1);
-      sceneRef.current.add(directionalLight);
-      
-      // Create camera
-      const aspect = containerRef.current.offsetWidth / containerRef.current.offsetHeight;
-      cameraRef.current = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
-      cameraRef.current.position.set(0, 0, 5);
-      cameraRef.current.lookAt(0, 0, 0);
-      
-      // Create renderer
-      rendererRef.current = new THREE.WebGLRenderer({ antialias: true });
-      rendererRef.current.setSize(containerRef.current.offsetWidth, containerRef.current.offsetHeight);
-      rendererRef.current.setClearColor(0x000000, 1);
-      
-      // Clear container and add renderer
-      containerRef.current.innerHTML = '';
-      containerRef.current.appendChild(rendererRef.current.domElement);
-      
-      // Add a test cube to verify the scene is working
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      const cube = new THREE.Mesh(geometry, material);
-      cube.position.set(0, 0, 0);
-      sceneRef.current.add(cube);
-      console.log('🧪 Added test cube to verify scene rendering');
-      
-      console.log('✅ SparkJS scene created and added to container');
-      console.log('Container dimensions:', containerRef.current?.offsetWidth, 'x', containerRef.current?.offsetHeight);
-      
-      // Start animation loop
-      let frameCount = 0;
-      const animate = () => {
-        if (rendererRef.current && sceneRef.current && cameraRef.current) {
-          rendererRef.current.render(sceneRef.current, cameraRef.current);
-          
-          // Rotate splat mesh if it exists
-          if (splatMeshRef.current) {
-            splatMeshRef.current.rotation.y += 0.01;
-          }
-          
-          // Debug: log every 60 frames (about once per second)
-          frameCount++;
-          if (frameCount % 60 === 0) {
-            console.log('🎬 Animation frame:', frameCount, 'Scene objects:', sceneRef.current.children.length);
-          }
-        }
-        animationIdRef.current = requestAnimationFrame(animate);
-      };
-      animate();
-      console.log('✅ Animation loop started');
-      
+      // Create the viewer with optimized settings for .ksplat files
+      viewerRef.current = new GaussianSplats3D.Viewer({
+        'cameraUp': [0, -1, -0.6],
+        'initialCameraPosition': [-1, -4, 6],
+        'initialCameraLookAt': [0, 4, 0]
+      });
+
+      console.log('Viewer created:', viewerRef.current);
+
+      // Attach the viewer's renderer DOM element to the container
+      if (viewerRef.current && (viewerRef.current as any).renderer && (viewerRef.current as any).renderer.domElement) {
+        console.log('Adding viewer renderer to container...');
+        // Clear the container first
+        containerRef.current.innerHTML = '';
+        containerRef.current.appendChild((viewerRef.current as any).renderer.domElement);
+        console.log('✅ Viewer renderer added to container');
+      } else {
+        console.error('❌ Viewer renderer not available');
+      }
+
     } catch (error) {
-      console.error('Error creating SparkJS scene:', error);
+      console.error('Error creating GaussianSplats3D viewer:', error);
     }
 
-    // Handle window resize
-    const handleResize = () => {
-      if (containerRef.current && cameraRef.current && rendererRef.current) {
-        const width = containerRef.current.offsetWidth;
-        const height = containerRef.current.offsetHeight;
-        
-        cameraRef.current.aspect = width / height;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(width, height);
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-
     return () => {
-      console.log('Cleaning up SparkJS scene...');
-      if (animationIdRef.current) {
-        cancelAnimationFrame(animationIdRef.current);
+      console.log('Cleaning up GaussianSplats3D viewer...');
+      if (viewerRef.current) {
+        try {
+          (viewerRef.current as any).dispose?.();
+        } catch (e) {
+          console.error('Error disposing viewer:', e);
+        }
       }
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
-      if (splatMeshRef.current) {
-        splatMeshRef.current.dispose();
-      }
-      window.removeEventListener('resize', handleResize);
     };
   }, []); // Empty dependency array - only run once
 
   // Separate effect for loading assets (runs when assetUrl changes)
   useEffect(() => {
-    if (!sceneRef.current || !assetUrl) {
-      console.log('Scene not ready or no asset URL, skipping load');
+    if (!viewerRef.current || !assetUrl) {
+      console.log('Viewer not ready or no asset URL, skipping load');
       return;
     }
 
@@ -233,7 +172,7 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
             console.log('🔍 Analyzing binary .ksplat format:');
             console.log('  - Header: 00 01 00 00 01 00 00 00 01 00 00 00 d7 86 12 00');
             console.log('  - This appears to be a custom binary format');
-            console.log('  - Testing with SparkJS for compatibility');
+            console.log('  - Testing with GaussianSplats3D for compatibility');
           } else if (firstBytes[0] === 0x45 && firstBytes[1] === 0x78 && firstBytes[2] === 0x61 && firstBytes[3] === 0x6D && firstBytes[4] === 0x70 && firstBytes[5] === 0x6C && firstBytes[6] === 0x65) { // "Example"
             console.error('❌ File appears to be a placeholder/example file, not a real 3D asset');
             setFileFormat('Placeholder File (Error: Not a real 3D asset)');
@@ -275,49 +214,23 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
         const blobUrl = URL.createObjectURL(blob);
         console.log('🔗 Created blob URL:', blobUrl);
         
-        // Create SplatMesh with SparkJS
-        console.log('🎬 Creating SplatMesh with SparkJS...');
-        console.log('📁 Using blob URL:', blobUrl);
-        console.log('📊 File format for loading:', fileFormat);
-        
-        try {
-          const splatMesh = new SplatMesh({ url: blobUrl });
-          console.log('✅ SplatMesh created successfully:', splatMesh);
-          
-          // Set up the splat mesh
-          splatMesh.quaternion.set(1, 0, 0, 0);
-          splatMesh.position.set(0, 0, -3);
-          console.log('✅ SplatMesh positioned and oriented');
-          
-          // Remove existing splat mesh if any
-          if (splatMeshRef.current && sceneRef.current) {
-            console.log('🗑️ Removing existing splat mesh...');
-            sceneRef.current.remove(splatMeshRef.current);
-            splatMeshRef.current.dispose();
-          }
-          
-          // Add new splat mesh to scene
-          if (sceneRef.current) {
-            console.log('➕ Adding splat mesh to scene...');
-            sceneRef.current.add(splatMesh);
-            splatMeshRef.current = splatMesh;
-            console.log('✅ SplatMesh added to scene successfully');
-          } else {
-            console.error('❌ Scene is not available');
-            throw new Error('Scene is not available');
-          }
-          
+        // The library supports .ksplat files natively, so we can load them directly
+        return viewerRef.current!.addSplatScene(blobUrl, {
+          'splatAlphaRemovalThreshold': 5,
+          'showLoadingUI': true,
+          'position': [0, 1, 0],
+          'rotation': [0, 0, 0, 1],
+          'scale': [1.5, 1.5, 1.5]
+        }).finally(() => {
           // Clean up the blob URL after loading
           URL.revokeObjectURL(blobUrl);
-          console.log('🧹 Blob URL cleaned up');
-          
-          console.log('✅ SplatMesh creation and scene addition completed successfully');
-          setIsLoading(false);
-        } catch (splatError) {
-          console.error('❌ Error creating SplatMesh:', splatError);
-          URL.revokeObjectURL(blobUrl); // Clean up blob URL on error
-          throw new Error(`Failed to create SplatMesh: ${splatError instanceof Error ? splatError.message : 'Unknown error'}`);
-        }
+        });
+      })
+      .then(() => {
+        console.log('✅ Splat scene loaded successfully');
+        viewerRef.current?.start();
+        console.log('Viewer started');
+        setIsLoading(false);
       })
       .catch((error: unknown) => {
         console.error('Error loading splat scene:', error);
@@ -351,7 +264,7 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
             
             // Check if it's a .ksplat file
             if (fileFormat.includes('.ksplat')) {
-              console.error('⚠️ .ksplat files should be supported by SparkJS.');
+              console.error('⚠️ .ksplat files should be supported by this viewer library.');
               console.error('   The file might be corrupted or in an incompatible version.');
               setLoadError('K-Planes (.ksplat) file format error. The file might be corrupted or incompatible.');
             } else if (fileFormat.includes('Unknown')) {
@@ -361,7 +274,7 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
               console.error('   - The backend might be serving the wrong file type');
               setLoadError(`Unknown file format detected: ${fileFormat}. The file is not a valid splat file.`);
             } else {
-              setLoadError(`Unsupported file format: ${fileFormat}. SparkJS cannot load this file type.`);
+              setLoadError(`Unsupported file format: ${fileFormat}. The GaussianSplats3D library cannot load this file type.`);
             }
           }
         } else {
@@ -376,11 +289,10 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
     <div className="w-full h-full min-h-[400px] p-4 text-white relative">
       {/* Debug info always visible */}
       <div className="absolute top-2 left-2 z-20 bg-black/80 p-2 rounded text-xs">
-        <div>SparkJS GaussianSplat Component Active</div>
+        <div>GaussianSplats3D Component Active</div>
         <div>Asset URL: {assetUrl ? 'Present' : 'None'}</div>
         <div>Container: {containerRef.current ? 'Ready' : 'Not ready'}</div>
-        <div>Scene: {sceneRef.current ? 'Created' : 'Not created'}</div>
-        <div>Renderer: {rendererRef.current ? 'Created' : 'Not created'}</div>
+        <div>Viewer: {viewerRef.current ? 'Created' : 'Not created'}</div>
       </div>
       
       <div 
@@ -406,12 +318,11 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
           <p><strong>File Format:</strong> {fileFormat}</p>
           <p><strong>File Size:</strong> {fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(2)} MB` : 'Unknown'}</p>
           <p><strong>Container:</strong> {containerRef.current ? 'Ready' : 'Not ready'}</p>
-          <p><strong>Scene:</strong> {sceneRef.current ? 'Created' : 'Not created'}</p>
-          <p><strong>Renderer:</strong> {rendererRef.current ? 'Created' : 'Not created'}</p>
+          <p><strong>Viewer:</strong> {viewerRef.current ? 'Created' : 'Not created'}</p>
           <p><strong>Loading:</strong> {isLoading ? 'Yes' : 'No'}</p>
           {fileFormat.includes('.ksplat') && (
             <div className="mt-2 p-2 bg-green-900 rounded text-green-200">
-              <strong>✅ Format Supported:</strong> .ksplat files are natively supported by SparkJS.
+              <strong>✅ Format Supported:</strong> .ksplat files are natively supported by this viewer library.
               This should provide optimal performance and loading times.
             </div>
           )}
@@ -441,4 +352,4 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
       )}
     </div>
   );
-}
+} 

@@ -24,6 +24,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-three/drei": "^10.6.1",
     "@react-three/fiber": "^9.2.0",
+    "@sparkjsdev/spark": "^0.1.8",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-router": "^1.121.2",
     "@tanstack/react-router-devtools": "^1.121.2",
@@ -43,11 +44,12 @@
     "react-icons": "^5.5.0",
     "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
-    "three": "^0.178.0",
+    "three": "^0.179.1",
     "tw-animate-css": "^1.3.6",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
+    "@playcanvas/splat-transform": "^0.5.4",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
