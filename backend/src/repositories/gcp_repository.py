@@ -134,31 +134,58 @@ class GCPFirestoreRepository(DatabaseRepository[Dict[str, Any]]):
         results = await self.find_all(filters, limit=1)
         return results[0] if results else None
     
+    async def upsert(self, entity: Dict[str, Any]) -> Dict[str, Any]:
+        """Upsert an entity into Firestore."""
+        return await self.update(entity["user_id"], entity)
+    
 
 class GCPFileStorageRepository(FileStorageRepository[Dict[str, Any]]):
     """Google Cloud implementation for storage operations."""
     
     def __init__(self, bucket_name: Optional[str] = None):
+        # Initialize service account credentials for signed URLs
+        self._service_account_credentials = None
+        service_account_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+        print(f"🔍 Service account path: {service_account_path}")
+        if service_account_path and os.path.exists(service_account_path):
+            from google.oauth2 import service_account
+            print(f"✅ Loaded service account credentials from {service_account_path}")
+            self._service_account_credentials = service_account.Credentials.from_service_account_file(service_account_path)
         self._storage = storage.Client()
         self._bucket_name = bucket_name
     
     async def upload_file(self, source_file_path: str, destination_blob_name: str, 
                          content_type: Optional[str] = None) -> Dict[str, Any]:
         """Upload a file to Google Cloud Storage."""
-        return self._storage.upload_file(source_file_path, destination_blob_name, content_type)
+        bucket = self._storage.bucket(self._bucket_name)
+        blob = bucket.blob(destination_blob_name)
+        if content_type:
+            blob.upload_from_filename(source_file_path, content_type=content_type)
+        return {"blob_name": destination_blob_name, "bucket": self._bucket_name}
     
     async def upload_bytes(self, data: bytes, destination_blob_name: str, 
                           content_type: str = "application/octet-stream") -> Dict[str, Any]:
         """Upload bytes data to Google Cloud Storage."""
-        return self._storage.upload_bytes(data, destination_blob_name, content_type)
+        bucket = self._storage.bucket(self._bucket_name)
+        blob = bucket.blob(destination_blob_name)
+        blob.upload_from_string(data, content_type=content_type)
+        return {"blob_name": destination_blob_name, "bucket": self._bucket_name}
     
     async def download_file(self, blob_name: str, destination_file_path: str) -> bool:
         """Download a file from Google Cloud Storage."""
-        return self._storage.download_file(blob_name, destination_file_path)
+        bucket = self._storage.bucket(self._bucket_name)
+        blob = bucket.blob(blob_name)
+        if blob.exists():
+            blob.download_to_filename(destination_file_path)
+            return True
+        return False
     
     async def delete_file(self, blob_name: str) -> bool:
         """Delete a file from Google Cloud Storage."""
-        return self._storage.delete_file(blob_name)
+        bucket = self._storage.bucket(self._bucket_name)
+        blob = bucket.blob(blob_name)
+        blob.delete()
+        return not blob.exists()
     
     async def file_exists(self, blob_name: str) -> bool:
         """Check if a file exists in Google Cloud Storage."""
@@ -176,8 +203,36 @@ class GCPFileStorageRepository(FileStorageRepository[Dict[str, Any]]):
     async def generate_signed_upload_url(self, destination_blob_name: str, expiration: int = 15 * 60, 
                                        content_type: str = "application/octet-stream") -> str:
         """Generate a signed URL for uploading a file to Google Cloud Storage."""
-        return self._storage.generate_signed_upload_url(destination_blob_name, expiration, content_type)
+        if self._service_account_credentials:
+            print("✅ Using service account credentials for signed URL")
+            # Use service account credentials for signed URLs
+            client = storage.Client(credentials=self._service_account_credentials)
+            bucket = client.bucket(self._bucket_name)
+        else:
+            # Fallback to default credentials
+            print("⚠️ Using default credentials - signed URLs may not work")
+            bucket = self._storage.bucket(self._bucket_name)
+        
+        blob = bucket.blob(destination_blob_name)
+        from datetime import timedelta
+        return blob.generate_signed_url(expiration=timedelta(seconds=expiration), method="PUT", content_type=content_type)
     
     async def generate_download_url(self, blob_name: str, expiration: Optional[int] = None) -> str:
         """Generate a download URL for a file in Google Cloud Storage."""
-        return self._storage.generate_download_url(blob_name, expiration) 
+        if self._service_account_credentials:
+            print("✅ Using service account credentials for signed URL")
+            # Use service account credentials for signed URLs
+            client = storage.Client(credentials=self._service_account_credentials)
+            bucket = client.bucket(self._bucket_name)
+        else:
+            # Fallback to default credentials
+            print("⚠️ Using default credentials - signed URLs may not work")
+            bucket = self._storage.bucket(self._bucket_name)
+        
+        blob = bucket.blob(blob_name)
+        if expiration is None:
+            expiration = 3600  # 1 hour default
+        from datetime import timedelta
+        print(f"🔍 About to generate signed URL for blob: {blob_name}")
+        return blob.generate_signed_url(expiration=timedelta(seconds=expiration), method="GET")
+        print(f"✅ Generated signed URL successfully")

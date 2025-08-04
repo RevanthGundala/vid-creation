@@ -24,6 +24,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Handle Callback
+         * @description Handle the callback from the AuthKit login flow.
+         *     Returns access_token and refresh_token.
+         */
+        get: operations["handle_callback_api_auth_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/me": {
         parameters: {
             query?: never;
@@ -34,7 +55,7 @@ export interface paths {
         /**
          * Get Current User
          * @description Get current user information.
-         *     This endpoint requires a valid AuthKit token.
+         *     This endpoint requires a valid Bearer token.
          */
         get: operations["get_current_user_api_auth_me_get"];
         put?: never;
@@ -374,6 +395,26 @@ export interface components {
 export type $defs = Record<string, never>;
 export interface operations {
     login_api_auth_login_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    handle_callback_api_auth_callback_get: {
         parameters: {
             query?: never;
             header?: never;

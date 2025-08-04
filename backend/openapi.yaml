@@ -14,12 +14,25 @@ paths:
           content:
             application/json:
               schema: {}
+  /api/auth/callback:
+    get:
+      summary: Handle Callback
+      description: 'Handle the callback from the AuthKit login flow.
+
+        Returns access_token and refresh_token.'
+      operationId: handle_callback_api_auth_callback_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
   /api/auth/me:
     get:
       summary: Get Current User
       description: 'Get current user information.
 
-        This endpoint requires a valid AuthKit token.'
+        This endpoint requires a valid Bearer token.'
       operationId: get_current_user_api_auth_me_get
       responses:
         '200':

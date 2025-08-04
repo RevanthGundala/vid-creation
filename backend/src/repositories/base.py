@@ -40,6 +40,11 @@ class DatabaseRepository(ABC, Generic[T]):
         """Find a single entity matching the filters."""
         pass
 
+    @abstractmethod
+    async def upsert(self, entity: T) -> T:
+        """Upsert an entity into the database."""
+        pass
+
 
 class FileStorageRepository(ABC, Generic[T]):
     """Base repository interface for file storage operations."""

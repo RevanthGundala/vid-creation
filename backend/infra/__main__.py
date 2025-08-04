@@ -71,7 +71,7 @@ for api in apis:
     enabled_api = gcp.projects.Service(f"{api.replace('.', '-')}",
         project=project_id,
         service=api,
-        disable_dependent_services=False
+        disable_dependent_services=True
     )
     enabled_apis.append(enabled_api)
 
@@ -83,6 +83,13 @@ bucket = gcp.storage.Bucket('vid-creation-bucket',
     versioning={
         'enabled': True
     },
+    name='vid-creation-backend-storage',
+    cors=[{
+        'origins': ['http://localhost:3000', 'http://127.0.0.1:3000'] if environment == 'development' else ['https://your-production-domain.com'],
+        'methods': ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
+        'response_headers': ['Content-Type', 'Content-Length', 'Accept-Ranges', 'Content-Range'],
+        'max_age_seconds': 3600
+    }],
     lifecycle_rules=[{
         'action': {
             'type': 'Delete'
@@ -103,7 +110,8 @@ firestore_database = gcp.firestore.Database('vid-creation-db',
     name='vid-creation-db',
     location_id=region,
     type='FIRESTORE_NATIVE',
-    delete_protection_state='DELETE_PROTECTION_DISABLED'
+    delete_protection_state='DELETE_PROTECTION_DISABLED',
+    opts=pulumi.ResourceOptions(depends_on=enabled_apis)
 )
 
 # Create a service account for the Cloud Run service

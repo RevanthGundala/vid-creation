@@ -1,33 +1,34 @@
-//TODO: use our own - currently using WorkOS login page
+// TODO: use our own - currently using WorkOS login page
 
+import React, { useState, useEffect } from "react";
+import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
+import { GalleryVerticalEnd } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { toast } from 'sonner';
+import { useAuth } from "../contexts/auth-context";
 
+export const Route = createFileRoute('/login')({
+  component: Authentication,
+});
 
+function Authentication() {
+    const { login } = useAuth();
 
+    useEffect(() => {
+        login();
+    }, []);
 
-// import React, { useState, useEffect } from "react";
-// import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
-// import { GalleryVerticalEnd } from "lucide-react"
-// import { Button } from "@/components/ui/button"
-// import {
-//   Card,
-//   CardContent,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card"
-// import { toast } from 'sonner';
-// import { useAuth } from "../contexts/auth-context";
-
-// export const Route = createFileRoute('/login')({
-//   component: Authentication,
-//   validateSearch: (search) => ({
-//     code: search.code as string | undefined,
-//     state: search.state as string | undefined,
-//     error: search.error as string | undefined,
-//     error_description: search.error_description as string | undefined,
-//   }),
-// });
-
-// function Authentication() {
+    return (
+        <div>
+            <h1>Logging in...</h1>
+        </div>
+    )
 //   return (
 //     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
 //       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -41,7 +42,7 @@
 //       </div>
 //     </div>
 //   )
-// }
+}
 
 // export function LoginForm({
 //   className,

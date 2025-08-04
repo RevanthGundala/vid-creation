@@ -1,11 +1,13 @@
 import createFetchClient from "openapi-fetch";
 import createClient from "openapi-react-query";
 import type { paths } from "../types/api";
-import { authenticatedFetch } from "./use-session-storage";
+
+
+// Authenticated fetch exists b/c we have cookie stored
 
 export const fetchClient = createFetchClient<paths>({ 
   baseUrl: import.meta.env.VITE_API_URL,
-  fetch: authenticatedFetch,
+  credentials: 'include', // This ensures cookies are sent with requests
 });
 
 export const $api = createClient(fetchClient);

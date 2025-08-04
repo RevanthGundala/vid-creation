@@ -1,8 +1,7 @@
-from fastapi import Request, APIRouter, Depends, HTTPException
+from fastapi import Request, APIRouter, Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.repositories.base import DatabaseRepository
-from src.dependencies.dependencies_request import get_auth_service, get_user_repository, get_current_user_from_token
+from src.dependencies.dependencies_request import get_auth_service, get_user_repository, get_current_user_from_cookie
 from src.services.auth_service import AuthService
 from src.schemas.user import User
 
@@ -31,7 +30,7 @@ async def handle_callback(
 
 @router.get("/api/auth/me")
 async def get_current_user(
-    current_user: User = Depends(get_current_user_from_token)
+    current_user: User = Depends(get_current_user_from_cookie)
 ):
     """
     Get current user information.
@@ -39,26 +38,7 @@ async def get_current_user(
     """
     return current_user
 
-@router.post("/api/auth/refresh")
-async def refresh_token(
-    request: Request,
-    auth_service: AuthService = Depends(get_auth_service)
-):
-    """
-    Refresh an access token using a refresh token.
-    Expects refresh_token in request body.
-    """
-    try:
-        body = await request.json()
-        refresh_token = body.get("refresh_token")
-        if not refresh_token:
-            raise HTTPException(status_code=400, detail="refresh_token is required")
-        
-        return await auth_service.refresh_access_token(refresh_token)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid request body")
-
-@router.get("/api/auth/logout")
+@router.post("/api/auth/logout")
 async def logout(
     request: Request,
     auth_service: AuthService = Depends(get_auth_service)

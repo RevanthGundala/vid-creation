@@ -22,6 +22,8 @@ async def lifespan(app: FastAPI):
     app.state.file_storage = GCPFileStorageRepository(os.getenv("GCP_STORAGE_BUCKET"))
     app.state.job_service = JobService(app.state.job_repo)
     app.state.job_processor = JobProcessor(app.state.job_service, app.state.file_storage)
+    google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    print(f"🔍 GOOGLE_APPLICATION_CREDENTIALS: {google_creds}")
     print("Services initialized")
     yield
     print("Shutting down...")
@@ -29,11 +31,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.middleware("http")(logging_middleware)
-
-app.include_router(auth_router)
-app.include_router(webhook_router)
-app.include_router(job_router)
-
 app.add_middleware(
        CORSMiddleware,
        allow_origins=["http://localhost:3000"],
@@ -41,6 +38,9 @@ app.add_middleware(
        allow_methods=["*"],
        allow_headers=["*"],
 )
+app.include_router(auth_router)
+app.include_router(webhook_router)
+app.include_router(job_router)
 
 @app.get("/")
 async def root():

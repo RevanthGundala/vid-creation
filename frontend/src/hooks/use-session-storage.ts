@@ -1,196 +1,78 @@
-// TODO: React Query might not be useful here, we can just use sessionStorage directly?
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { SESSION_STORAGE_KEY } from '../constants';
-
-
-interface TokenData {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt?: number;
-}
-
-interface SessionData {
-  user: {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    emailVerified: boolean;
-    createdAt: string;
-    updatedAt: string;
-  };
-  tokens: TokenData;
-}
-
-// Helper functions for localStorage
-const getStoredSession = (): SessionData | null => {
-  try {
-    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  } catch (error) {
-    console.error('Error reading session from localStorage:', error);
-    return null;
-  }
-};
-
-const setStoredSession = (session: SessionData | null): void => {
-  try {
-    if (session) {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-    } else {
-      localStorage.removeItem(SESSION_STORAGE_KEY);
-    }
-  } catch (error) {
-    console.error('Error writing session to localStorage:', error);
-  }
-};
-
-// Check if token is expired
-const isTokenExpired = (expiresAt?: number): boolean => {
-  if (!expiresAt) return false;
-  return Date.now() >= expiresAt;
-};
-
-// Standalone function to get access token (can be used outside of React components)
-export const getAccessToken = (): string | null => {
-  const session = getStoredSession();
-  if (!session?.tokens?.accessToken) return null;
-  
-  // Check if token is expired
-  if (isTokenExpired(session.tokens.expiresAt)) {
-    return null;
-  }
-  
-  return session.tokens.accessToken;
-};
-
-export const authenticatedFetch = async (input: Request): Promise<Response> => {
-  const accessToken = getAccessToken();
-  const newRequest = new Request(input, {
-    headers: {
-      ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-    },
-  });
-  
-  return fetch(newRequest);
-};
+import { useQueryClient } from '@tanstack/react-query';
+import { $api } from '.';
 
 export function useSessionStorage() {
   const queryClient = useQueryClient();
 
-  // Query to get current session
-  const { data: session, isLoading } = useQuery({
-    queryKey: ['session'],
-    queryFn: getStoredSession,
-    staleTime: Infinity, // Session data doesn't become stale
-    gcTime: Infinity, // Keep in cache indefinitely
-  });
+  // Query to get current user session from backend
+  const { data: user, isLoading, refetch, error } = $api.useQuery(
+    'get',
+    '/api/auth/me',
+    undefined, // No parameters needed
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: (failureCount, error: any) => {
+        console.log('Auth retry attempt:', failureCount, 'Error:', error);
+        // Don't retry on 401 (unauthorized)
+        if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      onError: (error: any) => {
+        console.error('Auth error:', error);
+      },
+    }
+  );
 
-  // Mutation to set session
-  const setSessionMutation = useMutation({
-    mutationFn: async (newSession: SessionData) => {
-      setStoredSession(newSession);
-      return newSession;
-    },
-    onSuccess: (newSession) => {
-      queryClient.setQueryData(['session'], newSession);
-    },
-  });
+  // Log the user data for debugging
+  console.log('Current user data:', user);
+  console.log('Auth error:', error);
 
-  // Mutation to clear session
-  const clearSessionMutation = useMutation({
-    mutationFn: async () => {
-      setStoredSession(null);
-      return null;
-    },
+  // Mutation to sign out using $api
+  const signOutMutation = $api.useMutation('post', '/api/auth/logout', {
     onSuccess: () => {
-      queryClient.setQueryData(['session'], null);
+      // Clear session data from cache
+      queryClient.setQueryData(['user'], null);
       queryClient.clear(); // Clear all queries when logging out
     },
   });
 
-  // Mutation to update tokens
-  const updateTokensMutation = useMutation({
-    mutationFn: async (tokens: TokenData) => {
-      const currentSession = getStoredSession();
-      if (!currentSession) {
-        throw new Error('No active session to update tokens for');
-      }
-      
-      const updatedSession: SessionData = {
-        ...currentSession,
-        tokens,
-      };
-      
-      setStoredSession(updatedSession);
-      return updatedSession;
-    },
-    onSuccess: (updatedSession) => {
-      queryClient.setQueryData(['session'], updatedSession);
+  // Mutation to login using $api
+  const loginMutation = $api.useMutation('get', '/api/auth/login', {
+    onSuccess: (data) => {
+      // After successful login, refetch the user session
+      refetch();
     },
   });
 
   // Helper functions
-  const setSession = (sessionData: SessionData) => {
-    setSessionMutation.mutate(sessionData);
+  const signOut = async (): Promise<void> => {
+    await signOutMutation.mutateAsync({});
   };
 
-  const clearSession = () => {
-    clearSessionMutation.mutate();
+  const login = async (): Promise<void> => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/login`;
   };
 
-  const updateTokens = (tokens: TokenData) => {
-    updateTokensMutation.mutate(tokens);
+  const refreshSession = () => {
+    refetch();
   };
 
-  const getAccessToken = (): string | null => {
-    if (!session?.tokens?.accessToken) return null;
-    
-    // Check if token is expired
-    if (isTokenExpired(session.tokens.expiresAt)) {
-      return null;
-    }
-    
-    return session.tokens.accessToken;
-  };
-
-  const getRefreshToken = (): string | null => {
-    return session?.tokens?.refreshToken || null;
-  };
-
-  const isAuthenticated = (): boolean => {
-    return !!getAccessToken();
-  };
-
-  const needsRefresh = (): boolean => {
-    if (!session?.tokens?.expiresAt) return false;
-    
-    // Consider token needs refresh if it expires in the next 5 minutes
-    const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
-    return session.tokens.expiresAt <= fiveMinutesFromNow;
-  };
+  // Computed values
+  const isAuthenticated = !!user;
+  const isSigningOut = signOutMutation.isPending;
+  const isLoggingIn = loginMutation.isPending;
 
   return {
-    // Data
-    session,
+    user: user || null,
     isLoading,
-    
-    // Actions
-    setSession,
-    clearSession,
-    updateTokens,
-    
-    // Getters
-    getAccessToken,
-    getRefreshToken,
+    signOut,
+    login,
+    refreshSession,
     isAuthenticated,
-    needsRefresh,
-
-    authenticatedFetch,
-    
-    // Mutation states
-    isSettingSession: setSessionMutation.isPending,
-    isClearingSession: clearSessionMutation.isPending,
-    isUpdatingTokens: updateTokensMutation.isPending,
+    isSigningOut,
+    isLoggingIn,
   };
-} 
+}

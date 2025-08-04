@@ -9,6 +9,7 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<GaussianSplats3D.Viewer | undefined>(undefined);
 
+  // Separate effect for viewer creation (runs only once)
   useEffect(() => {
     console.log('GaussianSplat component mounted');
     
@@ -32,57 +33,18 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
       // Attach the viewer's renderer DOM element to the container
       if (viewerRef.current && (viewerRef.current as any).renderer && (viewerRef.current as any).renderer.domElement) {
         console.log('Adding viewer renderer to container...');
-        containerRef.current!.appendChild((viewerRef.current as any).renderer.domElement);
-        console.log('Viewer renderer added to container');
-      }
-
-      // Load the splat scene
-      if (viewerRef.current) {
-        console.log('Loading splat scene...');
-        
-        // Use the provided asset URL or fallback to the sample
-        const sceneUrl = assetUrl || "/splats/bonsai/bonsai_high.ksplat";
-        console.log('Loading scene from:', sceneUrl);
-        console.log('Asset URL provided:', assetUrl);
-        
-        // Test if the URL is accessible
-        if (assetUrl) {
-          fetch(assetUrl)
-            .then(response => {
-              console.log('Asset fetch response:', response.status, response.statusText);
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.blob();
-            })
-            .then(blob => {
-              console.log('Asset blob size:', blob.size);
-              console.log('Asset blob type:', blob.type);
-            })
-            .catch(error => {
-              console.error('Error fetching asset:', error);
-            });
+        // Clear the container first to avoid DOM conflicts
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
         }
-        
-        viewerRef.current.addSplatScene(sceneUrl, {
-          'splatAlphaRemovalThreshold': 5,
-          'showLoadingUI': true,
-          'position': [0, 1, 0],
-          'rotation': [0, 0, 0, 1],
-          'scale': [1.5, 1.5, 1.5]
-        })
-        .then(() => {
-          console.log('Splat scene loaded successfully');
-          viewerRef.current?.start();
-          console.log('Viewer started');
-        })
-        .catch((error: unknown) => {
-          console.error('Error loading splat scene:', error);
-        });
+        containerRef.current!.appendChild((viewerRef.current as any).renderer.domElement);
+        console.log('✅ Viewer renderer added to container');
+        console.log('Container dimensions:', containerRef.current?.offsetWidth, 'x', containerRef.current?.offsetHeight);
       } else {
-        console.error('Viewer was not created successfully');
-        console.log('Viewer:', viewerRef.current);
-        console.log('Available properties:', Object.keys(viewerRef.current || {}));
+        console.error('❌ Viewer renderer not available');
+        console.log('Viewer ref:', viewerRef.current);
+        console.log('Viewer renderer:', (viewerRef.current as any)?.renderer);
+        console.log('Viewer DOM element:', (viewerRef.current as any)?.renderer?.domElement);
       }
     } catch (error) {
       console.error('Error creating GaussianSplats3D viewer:', error);
@@ -94,6 +56,52 @@ export function GaussianSplat({ assetUrl }: GaussianSplatProps) {
         viewerRef.current.dispose();
       }
     };
+  }, []); // Empty dependency array - only run once
+
+  // Separate effect for loading assets (runs when assetUrl changes)
+  useEffect(() => {
+    if (!viewerRef.current || !assetUrl) {
+      console.log('Viewer not ready or no asset URL, skipping load');
+      return;
+    }
+
+    console.log('Loading splat scene...');
+    console.log('Asset URL provided:', assetUrl);
+    
+    // Test if the URL is accessible first
+    console.log('🔍 Testing asset URL accessibility...');
+    fetch(assetUrl)
+      .then(response => {
+        console.log('Asset fetch response:', response.status, response.statusText);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        console.log('Asset blob size:', blob.size, 'bytes');
+        console.log('Asset blob type:', blob.type);
+        console.log('✅ Asset file fetched successfully!');
+        
+        // Now load the scene into the viewer
+        console.log('🎬 Loading scene into viewer...');
+        return viewerRef.current!.addSplatScene(assetUrl, {
+          'splatAlphaRemovalThreshold': 5,
+          'showLoadingUI': true,
+          'position': [0, 1, 0],
+          'rotation': [0, 0, 0, 1],
+          'scale': [1.5, 1.5, 1.5]
+        });
+      })
+      .then(() => {
+        console.log('Splat scene loaded successfully');
+        viewerRef.current?.start();
+        console.log('Viewer started');
+      })
+      .catch((error: unknown) => {
+        console.error('Error loading splat scene:', error);
+      });
   }, [assetUrl]);
 
   return (

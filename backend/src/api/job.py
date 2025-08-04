@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
-from src.dependencies.dependencies_request import get_job_service, get_job_processor, get_current_user_from_token
+from src.dependencies.dependencies_request import get_job_service, get_job_processor, get_current_user_from_cookie
 from src.services.job_service import JobService
 from src.services.job_processor import JobProcessor
 from src.schemas.job import JobStatus, JobCreate, Job
@@ -17,7 +17,7 @@ class AssetUrlResponse(BaseModel):
 @router.get("/api/jobs/{job_id}", response_model=Job)
 async def get_job(
     job_id: str, 
-    user: User = Depends(get_current_user_from_token),
+    user: User = Depends(get_current_user_from_cookie),
     job_service: JobService = Depends(get_job_service)
 ):
     """
@@ -25,12 +25,17 @@ async def get_job(
     """
     if not job_id:
         raise HTTPException(status_code=400, detail="Job ID is required")
+    
+    # Check if user is actually a User object (not a RedirectResponse)
+    if not isinstance(user, User):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     job = await job_service.get_job_by_id(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     
-    if job.user_id != user["uid"]:
-        raise HTTPException(status_code=403, detail=f"Access denied for job {job_id} and user {user['uid']}")
+    if job.user_id != user.user_id:
+        raise HTTPException(status_code=403, detail=f"Access denied for job {job_id} and user {user.user_id}")
     
     return job
 
@@ -38,7 +43,7 @@ async def get_job(
 async def get_project_jobs(
     project_id: str, 
     limit: int = 50,
-    user: User = Depends(get_current_user_from_token),
+    user: User = Depends(get_current_user_from_cookie),
     job_service: JobService = Depends(get_job_service)
 ):
     """
@@ -46,38 +51,51 @@ async def get_project_jobs(
     """
     if not project_id:
         raise HTTPException(status_code=400, detail="Project ID is required")
+    
+    # Check if user is actually a User object (not a RedirectResponse)
+    if not isinstance(user, User):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     # TODO: Maybe add endpoint that gets all jobs for a project without a user
-    jobs = await job_service.get_project_jobs(project_id, user["uid"], limit)
+    jobs = await job_service.get_project_jobs(project_id, user.user_id, limit)
     return jobs
 
 @router.get("/api/jobs", response_model=list[Job])
 async def get_user_jobs(
     limit: int = 50,
-    user: User = Depends(get_current_user_from_token),
+    user: User = Depends(get_current_user_from_cookie),
     job_service: JobService = Depends(get_job_service)
 ):
     """
     Get all jobs for the authenticated user.
     """
-    if not user["uid"]:
+    # Check if user is actually a User object (not a RedirectResponse)
+    if not isinstance(user, User):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    if not user.user_id:
         raise HTTPException(status_code=400, detail="User ID is required")
-    jobs = await job_service.get_user_jobs(user["uid"], limit)
+    jobs = await job_service.get_user_jobs(user.user_id, limit)
     return jobs
 
 @router.post("/api/jobs", response_model=Job)
 async def create_job(
     job_request: JobCreate,
     background_tasks: BackgroundTasks,
-    user: User = Depends(get_current_user_from_token),
+    user: User = Depends(get_current_user_from_cookie),
     job_service: JobService = Depends(get_job_service),
     job_processor: JobProcessor = Depends(get_job_processor),
 ):
     """
     Create a new job of any supported type.
     """
+    # Check if user is actually a User object (not a RedirectResponse)
+    if not isinstance(user, User):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     job = await job_service.create_job(
         job_request,
-        user_id=user["uid"],
+        user_id=user.user_id,
     )
     
     # Start background processing
@@ -93,7 +111,7 @@ async def create_job(
 @router.get("/api/jobs/{job_id}/asset-url", response_model=AssetUrlResponse)
 async def get_job_asset_url(
     job_id: str,
-    user: User = Depends(get_current_user_from_token),
+    user: User = Depends(get_current_user_from_cookie),
     job_service: JobService = Depends(get_job_service),
 ):
     """
@@ -103,11 +121,15 @@ async def get_job_asset_url(
     if not job_id:
         raise HTTPException(status_code=400, detail="Job ID is required")
     
+    # Check if user is actually a User object (not a RedirectResponse)
+    if not isinstance(user, User):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     job = await job_service.get_job_by_id(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     
-    if job.user_id != user["uid"]:
+    if job.user_id != user.user_id:
         raise HTTPException(status_code=403, detail=f"Access denied for job {job_id}")
     
     if job.status != JobStatus.COMPLETED:

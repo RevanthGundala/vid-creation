@@ -29,28 +29,38 @@ class JobProcessor:
                 raise ValueError(f"Job {job_id} failed: prompt is required")
             logger.info(f"Starting 3D asset generation for job {job_id} with prompt: {prompt}")
             
-            # Generate output file path
-            # TODO: Add file extension to parameters
             output_filename = f"{job_id}.{parameters.get('file_type')}"
             output_path = self.assets_dir / output_filename
             
             # TODO: Add actual 3D generation here
-            # Don't create a file, just upload empty bytes directly
-            # Create a binary placeholder that's clearly not text
-            file_content = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09'  # Binary data
-            logger.warning(f"Uploading binary placeholder content for {output_filename}")
+            # For now, use an example K-Splat file
+            example_ksplat_path = self.assets_dir / "ksplat" / "example.ksplat"
+            if example_ksplat_path.exists():
+                with open(example_ksplat_path, 'rb') as f:
+                    file_content = f.read()
+                logger.info(f"Using example K-Splat file: {example_ksplat_path}")
+            else:
+                # Fallback to placeholder if example file doesn't exist
+                file_content = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09'  # Binary data
+                logger.warning(f"Example K-Splat file not found, using placeholder content for {output_filename}")
 
             # Upload the generated asset to Firebase Storage
             storage_path = f"assets/{job_id}/{output_filename}"
             
-            upload_result = await self.file_storage.upload_file(
+            upload_result = await self.file_storage.upload_bytes(
                 file_content, 
                 storage_path, 
                 content_type="application/octet-stream"
             )
             
             # Get the signed URL from the upload result
-            signed_url = upload_result.get("public_url", "")
+            # Generate a signed download URL for the uploaded file
+            try:
+                signed_url = await self.file_storage.generate_download_url(storage_path, 86400)  # 24 hours
+                print(f"✅ Generated signed URL: {signed_url[:100]}...")  # Show first 100 chars
+            except Exception as e:
+                print(f"❌ Failed to generate signed URL: {e}")
+                signed_url = ""
 
             result = { 
                 "output_file": str(output_path),

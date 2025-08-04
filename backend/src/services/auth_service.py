@@ -20,8 +20,9 @@ class AuthService:
         self._auth_client = WorkOSClient(
             api_key=os.getenv("WORKOS_API_KEY"), client_id=os.getenv("WORKOS_CLIENT_ID")
         )
-        self._cookie_password = os.getenv("COOKIE_PASSWORD")
+        self._cookie_password = os.getenv("WORKOS_COOKIE_PASSWORD")
         self._frontend_redirect_url = os.getenv("FRONTEND_REDIRECT_URL")
+        self._is_dev = os.getenv("APP_ENV") == "development"
 
     async def login(self) -> RedirectResponse:
         """
@@ -56,7 +57,8 @@ class AuthService:
                 last_name=user.last_name,
                 profile_picture_url=user.profile_picture_url,
             )
-            await user_repo.create(user_data.model_dump())
+            
+            await user_repo.upsert(user_data.model_dump())
             
             # Create redirect response to frontend
             response = RedirectResponse(url=self._frontend_redirect_url, status_code=302)
@@ -64,7 +66,7 @@ class AuthService:
             response.set_cookie(
                 config.COOKIE_NAME,
                 auth_response.sealed_session,
-                secure=True,
+                secure=not self._is_dev, # Only set secure in production
                 httponly=True,
                 samesite="lax",
             )
@@ -76,7 +78,7 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Invalid code") from e
 
 
-    async def get_current_user_from_token(self, request: Request, user_repo: DatabaseRepository) -> User:
+    async def get_current_user_from_cookie(self, request: Request, user_repo: DatabaseRepository) -> User:
         """
         Get the current user from an access token.
         """
@@ -90,7 +92,7 @@ class AuthService:
                 user_id = auth_response.user.id
                 user = await user_repo.get_by_id(user_id)
                 if user:
-                    return user
+                    return User(**user)
                 else:
                     raise HTTPException(status_code=401, detail="User not found")
             elif (
@@ -113,7 +115,7 @@ class AuthService:
                     response.set_cookie(
                         config.COOKIE_NAME,
                         result.sealed_session,
-                        secure=True,
+                        secure=not self._is_dev,
                         httponly=True,
                         samesite="lax",
                     )

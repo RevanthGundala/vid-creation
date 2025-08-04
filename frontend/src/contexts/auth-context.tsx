@@ -1,61 +1,59 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useSessionStorage } from "../hooks/use-session-storage";
 
-// Define a generic user interface that works with WorkOS
-interface WorkOSUser {
-  id: string;
-  email: string;
+// Define a generic user interface that works with the API response
+interface User {
+  id?: string;
+  email?: string;
   firstName?: string;
   lastName?: string;
-  emailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  emailVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 const AuthContext = createContext<{ 
-  user: WorkOSUser | null; 
+  user: User | null; 
   signOut: () => Promise<void>;
-  setUser: (user: WorkOSUser | null) => void;
+  login: () => Promise<void>;
+  refreshSession: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSigningOut: boolean;
+  isLoggingIn: boolean;
 } | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { 
-    session, 
-    isLoading, 
-    setSession, 
-    clearSession, 
-    isAuthenticated: checkAuth 
+  const {
+    user,
+    isLoading,
+    signOut,
+    login,
+    refreshSession,
+    isAuthenticated,
+    isSigningOut,
+    isLoggingIn,
   } = useSessionStorage();
 
-  const setUser = (user: WorkOSUser | null) => {
-    if (user && session?.tokens) {
-      // Update user in existing session
-      setSession({
-        ...session,
-        user,
-      });
-    } else if (user) {
-      // Create new session with user (tokens should be set separately)
-      console.warn('Setting user without tokens. Use setSession with full session data instead.');
-    } else {
-      // Clear session
-      clearSession();
-    }
+  const handleSignOut = async (): Promise<void> => {
+    await signOut();
   };
 
-  const signOut = async () => {
-    clearSession();
+  const handleLogin = async (): Promise<void> => {
+    await login();
   };
 
   return (
     <AuthContext.Provider value={{
-      user: session?.user || null,
-      signOut,
-      setUser,
-      isAuthenticated: checkAuth(),
+      user: user || null,
+      signOut: handleSignOut,
+      login: handleLogin,
+      refreshSession,
+      isAuthenticated,
       isLoading,
+      isSigningOut,
+      isLoggingIn,
     }}>
       {children}
     </AuthContext.Provider>

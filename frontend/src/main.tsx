@@ -4,13 +4,14 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { PostHogProvider } from 'posthog-js/react'
 import { routeTree } from './routeTree.gen'
+import { AuthProvider, useAuth } from './contexts/auth-context'
 
-const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultPreloadStaleTime: 0,
-})
+// This will be populated by the router instance
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: any
+  }
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,17 +24,34 @@ const queryClient = new QueryClient({
   },
 })
 
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
+// Create a component that provides the auth context to the router
+function InnerApp() {
+  const auth = useAuth();
+  
+  const router = createRouter({
+    routeTree,
+    defaultPreload: 'intent',
+    scrollRestoration: true,
+    defaultPreloadStaleTime: 0,
+    context: {
+      auth: {
+        user: auth.user,
+        isAuthenticated: auth.isAuthenticated,
+        isLoading: auth.isLoading,
+      },
+    },
+  })
+
+  return <RouterProvider router={router} />
 }
 
 function App() {
   return (
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <InnerApp />
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }
 
@@ -41,16 +59,16 @@ const rootElement = document.getElementById('app')
 if (rootElement) {
   const root = createRoot(rootElement)
   root.render(
-    <PostHogProvider
-      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
-      options={{
-        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-        defaults: '2025-05-24',
-        capture_exceptions: true, // This enables capturing exceptions using Error Tracking
-        debug: import.meta.env.MODE === 'development',
-      }}
-    >
+    // <PostHogProvider
+    //   apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+    //   options={{
+    //     api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+    //     defaults: '2025-05-24',
+    //     capture_exceptions: true, // This enables capturing exceptions using Error Tracking
+    //     debug: import.meta.env.MODE === 'development',
+    //   }}
+    // >
       <App />
-    </PostHogProvider>
+    // </PostHogProvider>
   )
 }
