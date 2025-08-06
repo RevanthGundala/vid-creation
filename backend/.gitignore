@@ -3,3 +3,5 @@
 assets/
 .env.production
 .env.staging.env.*
+.env.*
+.env

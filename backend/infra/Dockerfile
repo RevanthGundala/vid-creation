@@ -1,19 +1,47 @@
-FROM python:3.11.3
+# backend/Dockerfile
+
+# --- Stage 1: The "Builder" Stage ---
+# This stage builds our dependencies using uv.
+FROM python:3.11-slim as builder
+
+# Set environment variables and install uv
+ENV PYTHONUNBUFFERED True
+RUN pip install --upgrade pip
+RUN pip install uv
+
+# Create a non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+WORKDIR /home/appuser
+
+# Copy only the project definition file to leverage Docker cache
+COPY pyproject.toml ./
+
+# Install dependencies using uv. This is much faster than pip.
+# The --system flag installs packages into the global site-packages,
+# which is standard practice inside an isolated container.
+RUN uv pip install --system --no-cache -p .
+
+
+# --- Stage 2: The "Final" Stage ---
+# This stage creates the lean final image for production.
+FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED True
 
-RUN pip install --upgrade pip
+# Create and switch to the non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+WORKDIR /home/appuser
 
-COPY requirements.txt .
+# Copy the installed packages from the builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Now, copy your application code
+COPY ./app ./app
 
-WORKDIR /root
-
-COPY /app /root/app
-
+# Expose the port the app runs on
 EXPOSE 8080
 
+# The command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && apt-get update -y && apt-get install google-cloud-cli -y
-    
