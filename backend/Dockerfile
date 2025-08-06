@@ -3,8 +3,8 @@ FROM python:3.11-slim as builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN pip install uv
-# Use --system to install packages into the global site-packages
-RUN uv sync --system --no-install-project
+# Install dependencies globally using uv pip install
+RUN uv pip install --system .
 
 COPY ./src ./src
 
