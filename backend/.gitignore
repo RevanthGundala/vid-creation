@@ -1,6 +1,5 @@
 .env.development
 .venv/*
-assets/
 infra/gcp-service-account-key.json
 .env.production
 .env.staging.env.*
