@@ -1,7 +1,8 @@
-agent
 api
-cli
 config
-database
+dependencies
 main
 models
+repositories
+schemas
+services
