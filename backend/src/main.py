@@ -41,8 +41,7 @@ app.add_middleware(
        allow_headers=["*"],
 )
 
-# Mount static files for assets
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
 
 app.include_router(auth_router)
 app.include_router(webhook_router)
