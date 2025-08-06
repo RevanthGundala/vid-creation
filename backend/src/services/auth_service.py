@@ -7,9 +7,9 @@ from fastapi import HTTPException, Request
 import logging
 from workos import WorkOSClient
 from fastapi.responses import RedirectResponse
-from src.config import config
 from src.schemas.user import User
 from src.repositories.base import DatabaseRepository
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
