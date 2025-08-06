@@ -72,7 +72,8 @@ gcp.projects.IAMMember('firestore-user-iam',
 # 6. Create a key for the Service Account.
 # This key's content will be securely passed to Render.
 service_account_key = gcp.serviceaccount.Key('render-app-sa-key',
-    service_account_id=service_account.name
+    service_account_id=service_account.name,
+    public_key_type='TYPE_X509_PEM_FILE'
 )
 
 # --- Pulumi Exports ---
