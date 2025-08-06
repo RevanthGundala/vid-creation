@@ -1,0 +1,50 @@
+# render.yaml
+# Place this file in the root of your repository.
+
+services:
+  # -----------------
+  # Backend API Service (FastAPI)
+  # -----------------
+  - type: web
+    name: vid-creation-api
+    env: docker
+    region: oregon # Or your preferred region
+    plan: free
+    healthCheck:
+      path: /health # Make sure this endpoint exists in your FastAPI app
+    dockerfilePath: ./backend/Dockerfile # The correct path to your backend Dockerfile
+    dockerCommand: "uvicorn app.main:app --host 0.0.0.0 --port 8080 --env-file .env.production" # The start command
+    envVars:
+      - fromGroup: vid-creation-secrets # Links to your shared secrets group
+
+  # -----------------
+  # Backend Worker (Celery)
+  # -----------------
+  - type: worker
+    name: vid-creation-worker
+    env: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./backend/Dockerfile # Uses the same Dockerfile as the API
+    dockerCommand: "celery -A your_app.celery worker --loglevel=info" # Starts the Celery worker
+    envVars:
+      - fromGroup: vid-creation-secrets
+
+  # -----------------
+  # Frontend Application (React)
+  # -----------------
+  - type: static
+    name: vid-creation-app
+    env: static
+    region: oregon
+    plan: free
+    branch: main
+    buildFilter:
+      paths:
+      - frontend/** # Only triggers a build if frontend files change
+    buildCommand: "npm install && npm run build"
+    publishDir: "dist" # Or "build", depending on your React setup
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

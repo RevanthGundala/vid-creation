@@ -42,6 +42,3 @@ COPY ./app ./app
 
 # Expose the port the app runs on
 EXPOSE 8080
-
-# The command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
