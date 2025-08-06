@@ -27,6 +27,7 @@ RUN uv pip install --system --no-cache -p .
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED True
+ENV PATH="/root/.local/bin:$PATH"
 
 # Create and switch to the non-root user
 RUN useradd --create-home --shell /bin/bash appuser
