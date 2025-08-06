@@ -6,6 +6,7 @@ RUN pip install uv
 RUN uv sync --no-install-project
 
 COPY ./src ./src
+RUN ls -l /usr/local/lib/python3.11/site-packages 
 
 FROM python:3.11-slim
 
@@ -16,6 +17,8 @@ COPY --from=builder /app/src ./src
 
 RUN useradd --create-home appuser
 USER appuser
+
+RUN ls -l /usr/local/lib/python3.11/site-packages 
 
 EXPOSE 8080
 
