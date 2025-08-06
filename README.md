@@ -10,8 +10,7 @@ A modern, full-stack application for AI-powered video generation. Built with Rea
 - **Modern UI**: Built with React, TanStack Router, and Tailwind CSS
 - **Asynchronous Processing**: Background job processing with status tracking
 
-## NOTE: Enable REPLICATE_API_TOKEN to see text2vid generation, currently using
-## a backup video. 
+## NOTE: Enable REPLICATE_API_TOKEN to see text2vid generation, currently using a backup video. 
 
 ## 🏗️ Architecture
 
