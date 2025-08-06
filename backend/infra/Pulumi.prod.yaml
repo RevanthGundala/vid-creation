@@ -1,5 +1,8 @@
 config:
   gcp:project: vid-creation-prod
   gcp:region: us-central1
-  infra:environment: production 
-  infra:region: us-central1   
+  infra:environment: production
+  infra:region: us-central1
+  vid-creation-infra:gcp_project_id: vid-creation-466903
+  vid-creation-infra:gcp_region: us-west1
+  vid-creation-infra:frontend_prod_url: https://vid-creation.onrender.com

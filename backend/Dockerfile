@@ -31,4 +31,4 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY ./app ./app
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE 8080
