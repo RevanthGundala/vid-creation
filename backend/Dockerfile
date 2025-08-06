@@ -1,34 +1,22 @@
-# backend/Dockerfile
-
-# --- Stage 1: The "Builder" Stage ---
 FROM python:3.11-slim as builder
 
-ENV PYTHONUNBUFFERED True
-RUN pip install --upgrade pip
-RUN pip install uv
-
 WORKDIR /app
-COPY pyproject.toml ./
-RUN uv pip install --system --no-cache -p .
+COPY pyproject.toml uv.lock ./
+RUN pip install uv
+RUN uv sync --no-install-project
 
-
-# --- Stage 2: The "Final" Stage ---
-FROM python:3.11-slim
-
-ENV PYTHONUNBUFFERED True
-
-# Create and switch to a non-root user for security
-RUN useradd --create-home --shell /bin/bash appuser
-USER appuser
-WORKDIR /home/appuser
-
-# --- FIX IS HERE ---
-# Copy both the Python libraries AND the executables (like uvicorn) from the builder stage
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Now, copy your application code
 COPY ./app ./app
 
-# Expose the port the app runs on
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /app ./app
+
+RUN useradd --create-home appuser
+USER appuser
+
 EXPOSE 8080
+
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
