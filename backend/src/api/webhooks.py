@@ -12,7 +12,6 @@ router = APIRouter()
 # Store active webhook connections
 active_connections: Set[str] = set()
 
-# TODO: Currently not used.
 
 @router.get("/api/webhooks/{job_id}/stream")
 async def stream_job_updates(job_id: str):

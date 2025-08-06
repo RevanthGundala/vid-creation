@@ -11,40 +11,40 @@ function ProjectsComponent() {
   const [projects, setProjects] = useState([
     { 
       id: '1', 
-      name: '3D City Builder', 
+      name: 'AI Videos Generator', 
       image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop',
-      description: 'Interactive 3D city planning application'
+      description: 'Ai Videos Generator' 
     },
-    { 
-      id: '2', 
-      name: 'Virtual Gallery', 
-      image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
-      description: 'Immersive art exhibition experience'
-    },
-    { 
-      id: '3', 
-      name: 'Game Engine', 
-      image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop',
-      description: 'Real-time 3D game development platform'
-    },
-    { 
-      id: '4', 
-      name: 'Architectural Viz', 
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
-      description: 'Building design visualization tool'
-    },
-    { 
-      id: '5', 
-      name: 'VR Experience', 
-      image: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=400&h=300&fit=crop',
-      description: 'Virtual reality training simulation'
-    },
-    { 
-      id: '6', 
-      name: 'Data Visualization', 
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
-      description: 'Interactive 3D data charts and graphs'
-    },
+    // { 
+    //   id: '2', 
+    //   name: 'Virtual Gallery', 
+    //   image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
+    //   description: 'Immersive art exhibition experience'
+    // },
+    // { 
+    //   id: '3', 
+    //   name: 'Game Engine', 
+    //   image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop',
+    //   description: 'Real-time 3D game development platform'
+    // },
+    // { 
+    //   id: '4', 
+    //   name: 'Architectural Viz', 
+    //   image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
+    //   description: 'Building design visualization tool'
+    // },
+    // { 
+    //   id: '5', 
+    //   name: 'VR Experience', 
+    //   image: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=400&h=300&fit=crop',
+    //   description: 'Virtual reality training simulation'
+    // },
+    // { 
+    //   id: '6', 
+    //   name: 'Data Visualization', 
+    //   image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop',
+    //   description: 'Interactive 3D data charts and graphs'
+    // },
   ])
   const [isCreating, setIsCreating] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')

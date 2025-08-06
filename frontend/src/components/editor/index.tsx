@@ -1,15 +1,23 @@
-import { GaussianSplatDirectURL } from "../splat/GaussianSplatDirectURL";
+import { EditComponent } from "./edit";
 
 interface EditorProps {
   assetUrl?: string;
+  videos?: Array<{
+    id: string;
+    url?: string;
+    title?: string;
+  }>;
+  isGenerating?: boolean;
 }
 
-export function Editor({ assetUrl }: EditorProps) {
+export function Editor({ assetUrl, videos = [], isGenerating = false }: EditorProps) {
   console.log('🎨 Editor component rendered with assetUrl:', assetUrl);
+  console.log('📹 Videos:', videos);
+  console.log('🔄 Is Generating:', isGenerating);
   
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white">
-      <GaussianSplatDirectURL assetUrl={assetUrl} />
+    <div className="bg-white text-black">
+      <EditComponent incomingEdit="Video Editor" videos={videos} isGenerating={isGenerating} />
     </div>
   );
 }

@@ -1,19 +1,17 @@
-import { useState, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { $api } from "./index";
-import { toast } from "sonner";
-import type { components } from "../types/api";
-
-type Job = components["schemas"]["Job"];
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { $api } from '.';
+import { toast } from 'sonner';
 
 interface UseJobStatusOptions {
   jobId: string;
-  onStatusChange?: (status: Job) => void;
+  onStatusChange?: (status: string) => void;
   onComplete?: (result: any) => void;
   onError?: (error: string) => void;
-  enableWebhook?: boolean; // Allow disabling webhook for testing
-  staleTime?: number; // React Query stale time
-  refetchInterval?: number | false; // Fallback polling interval if webhook fails
+  enableWebhook?: boolean;
+  staleTime?: number;
+  refetchInterval?: number | false;
+  // Fallback polling interval if webhook fails
 }
 
 export function useJobStatus({
@@ -75,11 +73,18 @@ export function useJobStatus({
     if (jobStatus) {
       // Reset error flag on success
       hasShownError.current = false;
-      onStatusChangeRef.current?.(jobStatus);
+      onStatusChangeRef.current?.(jobStatus.status);
 
       // Handle completion
       if (jobStatus.status === "completed" && onCompleteRef.current) {
         onCompleteRef.current(jobStatus.result);
+        // Invalidate related queries when job completes
+        queryClient.invalidateQueries({
+          queryKey: ['get', '/api/jobs']
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: jobId } } }]
+        });
       }
 
       // Handle errors
@@ -87,124 +92,103 @@ export function useJobStatus({
         onErrorRef.current(jobStatus.error || "Job failed");
       }
     }
-  }, [jobStatus]);
+  }, [jobStatus, queryClient, jobId]);
 
   // Handle query errors
   useEffect(() => {
-    if (error) {
+    if (error && !hasShownError.current) {
+      hasShownError.current = true;
       const errorMessage = Array.isArray(error.detail) 
         ? error.detail[0]?.msg || "Failed to fetch job status"
         : "Failed to fetch job status";
-      // Only show toast once per error
-      if (!hasShownError.current) {
-        toast.error(errorMessage);
-        hasShownError.current = true;
-      }
+      toast.error(errorMessage);
     }
   }, [error]);
 
-  // Webhook connection using Server-Sent Events
+  // Webhook connection for real-time updates
   useEffect(() => {
-    if (!jobId || !enableWebhook) {
-      return;
-    }
+    if (!enableWebhook || !jobId) return;
 
-    // Close existing connection if any
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-
-    // Only set up webhook if job is not already completed or failed
-    if (jobStatus?.status === "completed" || jobStatus?.status === "failed") {
-      return;
-    }
-
-    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/webhooks/${jobId}/stream`);
-    eventSourceRef.current = eventSource;
-    
-    eventSource.onopen = () => {
-      setIsWebhookConnected(true);
-      console.log(`Webhook connected for job ${jobId}`);
-    };
-
-    eventSource.onmessage = (event) => {
+    const connectWebhook = () => {
       try {
-        const data = JSON.parse(event.data);
+        const webhookUrl = `${import.meta.env.VITE_API_URL}/api/webhooks/${jobId}/stream`;
+        const eventSource = new EventSource(webhookUrl);
         
-        if (data.type === "job_update") {
-          // Update job status directly from webhook data
-          const updatedJob = data.job as Job;
-          
-          // Update React Query cache with new data
-          queryClient.setQueryData(["get", "/api/jobs/{job_id}", { params: { path: { job_id: jobId } } }], updatedJob);
-          
-          onStatusChangeRef.current?.(updatedJob);
+        eventSource.onopen = () => {
+          console.log(`Webhook connected for job ${jobId}`);
+          setIsWebhookConnected(true);
+        };
 
-          // Handle completion
-          if (updatedJob.status === "completed" && onCompleteRef.current) {
-            onCompleteRef.current(updatedJob.result);
-            eventSource.close(); // Close connection on completion
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Webhook message received:', data);
+            
+            // Update job status in cache
+            queryClient.setQueryData(
+              ['get', '/api/jobs/{job_id}', { params: { path: { job_id: jobId } } }],
+              data
+            );
+            
+            // Call status change callback
+            onStatusChangeRef.current?.(data.status);
+            
+            // Handle completion
+            if (data.status === "completed" && onCompleteRef.current) {
+              onCompleteRef.current(data.result);
+              // Invalidate related queries
+              queryClient.invalidateQueries({
+                queryKey: ['get', '/api/jobs']
+              });
+              queryClient.invalidateQueries({
+                queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: jobId } } }]
+              });
+            }
+            
+            // Handle errors
+            if (data.status === "failed" && onErrorRef.current) {
+              onErrorRef.current(data.error || "Job failed");
+            }
+          } catch (parseError) {
+            console.error('Failed to parse webhook message:', parseError);
           }
+        };
 
-          // Handle errors
-          if (updatedJob.status === "failed" && onErrorRef.current) {
-            onErrorRef.current(updatedJob.error || "Job failed");
-            eventSource.close(); // Close connection on error
-          }
-        } else if (data.type === "ping") {
-          // Handle ping messages to keep connection alive
-          console.log("Webhook ping received");
-        }
-      } catch (err) {
-        console.error("Error parsing webhook event:", err);
-      }
-    };
-
-    eventSource.onerror = (err) => {
-      console.error("Webhook connection error:", err);
-      setIsWebhookConnected(false);
-      
-      // If webhook fails, enable polling as fallback
-      if (refetchInterval === false) {
-        console.log("Webhook failed, enabling polling as fallback");
-        // This will trigger a refetch through React Query
-        refetch();
-      }
-      
-      // Attempt to reconnect after a delay
-      setTimeout(() => {
-        if (eventSourceRef.current === eventSource) {
-          console.log("Attempting to reconnect webhook...");
+        eventSource.onerror = (error) => {
+          console.error(`Webhook error for job ${jobId}:`, error);
+          setIsWebhookConnected(false);
           eventSource.close();
-          // The useEffect will handle reconnection
-        }
-      }, 5000);
+          
+          // Fallback to polling if webhook fails
+          setTimeout(() => {
+            refetch();
+          }, 1000);
+        };
+
+        eventSourceRef.current = eventSource;
+      } catch (error) {
+        console.error('Failed to connect to webhook:', error);
+        setIsWebhookConnected(false);
+      }
     };
 
-    return () => {
-      eventSource.close();
-      eventSourceRef.current = null;
-      setIsWebhookConnected(false);
-    };
-  }, [jobId, enableWebhook, jobStatus?.status, queryClient, refetch, refetchInterval]);
+    connectWebhook();
 
-  // Cleanup on unmount
-  useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+      setIsWebhookConnected(false);
     };
-  }, []);
+  }, [jobId, enableWebhook, queryClient, refetch]);
 
   return {
     jobStatus,
-    isLoading,
     error: error ? (Array.isArray(error.detail) 
       ? error.detail[0]?.msg || "Failed to fetch job status"
       : "Failed to fetch job status") : null,
+    isLoading,
     isWebhookConnected,
     refetch,
   };

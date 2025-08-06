@@ -1,5 +1,7 @@
 
 import { $api } from ".";
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 // Project type based on the backend schema
 export interface Project {
@@ -22,7 +24,7 @@ const mockProjects: Record<string, Project> = {
   "1": {
     project_id: "1",
     user_id: "user1",
-    name: "3D City Builder",
+    name: "Project 1",
     created_at: "2024-01-01T00:00:00Z",
     modified_at: "2024-01-01T00:00:00Z",
   },
@@ -44,9 +46,10 @@ const mockProjects: Record<string, Project> = {
 
 export function useProject(projectId: string, options: UseProjectOptions = {}) {
   const { enabled = true, onSuccess, onError } = options;
+  const queryClient = useQueryClient();
 
   // Use the project jobs endpoint to get project information indirectly
-  const { data: projectJobs, error: jobsError, isLoading: isJobsLoading } = $api.useQuery(
+  const { data: projectJobs, error: jobsError, isLoading: isJobsLoading, refetch } = $api.useQuery(
     "get", 
     `/api/jobs`,
     {
@@ -67,6 +70,30 @@ export function useProject(projectId: string, options: UseProjectOptions = {}) {
   const isLoading = enabled && !!projectId && isJobsLoading;
   const error = jobsError?.detail?.[0]?.msg || (jobsError?.detail ? JSON.stringify(jobsError.detail) : null) || (enabled && !!projectId && !mockProject ? "Project not found" : null);
 
+  // Enhanced refetch function that also invalidates related queries
+  const enhancedRefetch = async () => {
+    const result = await refetch();
+    
+    // Invalidate related queries to ensure fresh data
+    if (projectJobs) {
+      // Invalidate jobs query
+      queryClient.invalidateQueries({
+        queryKey: ['get', '/api/jobs']
+      });
+      
+      // Invalidate asset URL queries for completed jobs
+      projectJobs.forEach((job: any) => {
+        if (job.status === "completed") {
+          queryClient.invalidateQueries({
+            queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: job.job_id } } }]
+          });
+        }
+      });
+    }
+    
+    return result;
+  };
+
   // Call success/error callbacks
   if (project && onSuccess) {
     onSuccess(project);
@@ -82,10 +109,6 @@ export function useProject(projectId: string, options: UseProjectOptions = {}) {
     isLoading,
     // Additional data from jobs if needed
     jobs: projectJobs || [],
-    refetch: () => {
-      // In a real implementation, this would refetch the project data
-      // For now, we'll just return the mock data
-      return Promise.resolve(project);
-    },
+    refetch: enhancedRefetch,
   };
 }

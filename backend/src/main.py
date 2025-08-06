@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from src.config import config
 from src.repositories.gcp_repository import GCPFirestoreRepository, GCPFileStorageRepository
 from src.services.job_processor import JobProcessor
@@ -38,6 +40,10 @@ app.add_middleware(
        allow_methods=["*"],
        allow_headers=["*"],
 )
+
+# Mount static files for assets
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
 app.include_router(auth_router)
 app.include_router(webhook_router)
 app.include_router(job_router)

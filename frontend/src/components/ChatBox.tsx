@@ -33,23 +33,17 @@ export default function ChatBox({ onSubmit, errorMessage }: ChatBoxProps) {
   }
 
   return (
-    <div className="w-full max-w-4xl bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 border border-gray-700">
+    <div className="w-96 h-42 bg-black rounded-lg p-6 border border-gray-700">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {errorMessage && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 p-3 rounded text-sm">
-            <div className="font-semibold">⚠️ Issue Detected</div>
-            <div>{errorMessage}</div>
-          </div>
-        )}
         <div className="relative">
           <Textarea 
-            placeholder="Build a 3D model of a cat..." 
+            placeholder="Describe the video you want to generate..." 
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             className="bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 pr-12 resize-none"
-            rows={1}
-            style={{ minHeight: '44px' }}
+            rows={4}
+            style={{ minHeight: '120px' }}
           />
           <button
             type="submit"

@@ -13,6 +13,7 @@ export const fetchClient = createFetchClient<paths>({
 export const $api = createClient(fetchClient);
 
 export { use3dAsset } from './use-3d-asset'
+export { useVideo } from './use-video'
 export { useUploadVideo } from './use-upload-video'
 export { useProject } from './use-project'
 export type { Project } from './use-project'
