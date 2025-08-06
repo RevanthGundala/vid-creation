@@ -84,3 +84,4 @@ pulumi.export('FIRESTORE_DATABASE_ID', firestore_database.name)
 
 # CRITICAL: Export the key as a SECRET so it is encrypted in your state.
 pulumi.export('GCP_SERVICE_ACCOUNT_JSON', pulumi.Output.secret(service_account_key.private_key))
+

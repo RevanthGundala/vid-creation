@@ -8,6 +8,7 @@ from src.repositories.base import (
 )
 from google.cloud import firestore, storage
 from src.schemas.job import JobType, JobStatus
+from src.config import config
 import os
 
 
@@ -15,8 +16,8 @@ class GCPFirestoreRepository(DatabaseRepository[Dict[str, Any]]):
     """Google Cloud Firestore implementation of the base repository interface."""
     
     def __init__(self, collection_name: str):
-        self._firestore_client = firestore.AsyncClient(project=os.getenv("GCP_PROJECT_ID"), 
-        database=os.getenv("FIRESTORE_DATABASE_ID"))
+        self._firestore_client = firestore.AsyncClient(project=config.gcp_project_id, 
+        database=config.firestore_database_id)
         self._collection_name = collection_name
 
     # TODO: This is probably eating performance

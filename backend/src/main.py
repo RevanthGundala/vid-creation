@@ -18,14 +18,14 @@ import os
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     dotenv.load_dotenv()
+    
+    # Config will automatically handle Google Cloud credentials
     app.state.auth_service = AuthService()
     app.state.user_repo = GCPFirestoreRepository(config.USER_COLLECTION_NAME)
     app.state.job_repo = GCPFirestoreRepository(config.JOB_COLLECTION_NAME)
-    app.state.file_storage = GCPFileStorageRepository(os.getenv("GCP_STORAGE_BUCKET"))
+    app.state.file_storage = GCPFileStorageRepository(config.gcp_storage_bucket)
     app.state.job_service = JobService(app.state.job_repo)
     app.state.job_processor = JobProcessor(app.state.job_service, app.state.file_storage)
-    google_creds = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-    print(f"🔍 GOOGLE_APPLICATION_CREDENTIALS: {google_creds}")
     print("Services initialized")
     yield
     print("Shutting down...")
