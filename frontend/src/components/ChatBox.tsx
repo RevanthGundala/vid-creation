@@ -1,15 +1,12 @@
 import { useState } from 'react'
 import { Textarea } from './ui/textarea'
-import { Button } from './ui/button'
 
 interface ChatBoxProps {
   onSubmit: (prompt: string) => void
   errorMessage?: string | null
 }
 
-export default function ChatBox({ onSubmit, errorMessage }: ChatBoxProps) {
-  const [messages, setMessages] = useState<string[]>([])
-  const [model, setModel] = useState<string>('gpt-4o')
+export default function ChatBox({ onSubmit }: ChatBoxProps) {
   const [prompt, setPrompt] = useState<string>('')
 
   // Submit on button click
@@ -59,13 +56,7 @@ export default function ChatBox({ onSubmit, errorMessage }: ChatBoxProps) {
             </svg>
           </button>
         </div>
-        <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
-          {messages.map((message, index) => (
-            <div key={index} className="bg-gray-800/70 p-2 rounded-md text-sm">
-              {message}
-            </div>
-          ))}
-        </div>
+
       </form>
     </div>
   )

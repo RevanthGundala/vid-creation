@@ -1,16 +1,7 @@
 // TODO: use our own - currently using WorkOS login page
 
-import React, { useState, useEffect } from "react";
-import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router';
-import { GalleryVerticalEnd } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { toast } from 'sonner';
+import { useEffect } from "react";
+import { createFileRoute } from '@tanstack/react-router';
 import { useAuth } from "../contexts/auth-context";
 
 export const Route = createFileRoute('/login')({

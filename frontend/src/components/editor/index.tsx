@@ -17,7 +17,7 @@ export function Editor({ assetUrl, videos = [], isGenerating = false }: EditorPr
   
   return (
     <div className="bg-white text-black">
-      <EditComponent incomingEdit="Video Editor" videos={videos} isGenerating={isGenerating} />
+      <EditComponent videos={videos} isGenerating={isGenerating} />
     </div>
   );
 }

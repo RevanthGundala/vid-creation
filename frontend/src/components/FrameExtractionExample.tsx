@@ -4,10 +4,8 @@ import { Button } from '../components/ui/button'
 
 export default function FrameExtractionExample() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [selectedFrame, setSelectedFrame] = useState<ImageBitmap | null>(null)
 
   const handleFrameSelect = (frame: ImageBitmap) => {
-    setSelectedFrame(frame)
     console.log('Selected frame:', frame.width, 'x', frame.height)
   }
 

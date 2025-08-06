@@ -2,7 +2,6 @@ import './app.css';
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { PostHogProvider } from 'posthog-js/react'
 import { routeTree } from './routeTree.gen'
 import { AuthProvider, useAuth } from './contexts/auth-context'
 

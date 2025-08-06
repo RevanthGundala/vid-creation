@@ -47,8 +47,9 @@ export function Navbar() {
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={async () => {
-                await signOut(auth);
-                navigate({ to: "/" });
+                // TODO: Implement proper auth logout
+                console.log("Logout clicked");
+                navigate({ to: "/", search: {} } as any);
               }}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

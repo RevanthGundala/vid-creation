@@ -129,7 +129,9 @@ const data = {
     },
     {
       title: "Feedback",
-      url: "#",
+      onClick: () => {
+        console.log("Feedback")
+      },
       icon: Send,
     },
   ],

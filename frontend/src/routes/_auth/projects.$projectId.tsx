@@ -1,30 +1,16 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState, useRef } from 'react'
-import { use3dAsset, useVideo, useProject, $api } from '../../hooks'
+import { createFileRoute } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { useVideo, useProject, $api } from '../../hooks'
 import { toast } from 'sonner'
 import { Editor } from '@/components/editor'
 import ChatBox from '@/components/ChatBox'
-import type { Project } from '../../hooks/use-project'
-import { AppSidebar } from "@/components/app-sidebar"
+
 import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useQueryClient } from '@tanstack/react-query'
-
-// Loading animation component
-function LoadingAnimation({ message }: { message: string }) {
-  return (
-    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white text-lg font-semibold">{message}</p>
-        <p className="text-gray-300 text-sm mt-2">This may take a few minutes...</p>
-      </div>
-    </div>
-  )
-}
 
 export const Route = createFileRoute('/_auth/projects/$projectId')({
   component: ProjectComponent,
@@ -33,16 +19,11 @@ export const Route = createFileRoute('/_auth/projects/$projectId')({
 function ProjectComponent() {
   const params = Route.useParams()
   const queryClient = useQueryClient()
-  const [prompt, setPrompt] = useState<string | null>(null)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
-  const [asset, setAsset] = useState<any | null>(null)
-  const [assetLoadError, setAssetLoadError] = useState<string | null>(null)
-  const [isRetryingAsset, setIsRetryingAsset] = useState(false)
   const [lastJobCount, setLastJobCount] = useState(0)
 
   // Use the useProject hook instead of local state and fetchProject
-  const { project, error, isLoading, jobs, refetch } = useProject(params.projectId, {
-    onSuccess: (project: Project) => {
+  const { error, jobs, refetch } = useProject(params.projectId, {
+    onSuccess: () => {
       // Project loaded successfully
     },
     onError: (error: string) => {
@@ -189,50 +170,13 @@ function ProjectComponent() {
     };
   }, [jobs, queryClient, refetch]);
 
-  const { generate3dAsset } = use3dAsset({
-    onSuccess: (data) => {
-      // Refetch jobs after starting generation to get the new job
-      setTimeout(() => refetch(), 1000)
-    },
-    onError: (error) => {
-      // 3D asset generation error handled silently
-    }
-  })
-  
-  // Find the latest completed video job
-  const latestCompletedVideoJob = jobs
-    .filter(job => job.job_type === "Video" && job.status === "completed")
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-  
   // Find the latest completed 3D asset job
   const latestCompletedJob = jobs
     .filter(job => job.job_type === "Object" && job.status === "completed")
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
   
-  // Check if there are any jobs currently in progress
-  const jobsInProgress = jobs.filter(job => 
-    (job.job_type === "Object" || job.job_type === "Video") && 
-    job.status === "processing"
-  );
-  
-  const hasJobsInProgress = jobsInProgress.length > 0;
-  const latestJobInProgress = jobsInProgress.sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )[0];
-
-  // Check specifically for video jobs in progress
-  const videoJobsInProgress = jobs.filter(job => 
-    job.job_type === "Video" && 
-    job.status === "processing"
-  );
-  
-  const hasVideoJobsInProgress = videoJobsInProgress.length > 0;
-  const latestVideoJobInProgress = videoJobsInProgress.sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )[0];
-  
   // Use the correct API endpoint to get the asset URL
-  const { data: assetUrlData, error: assetUrlError } = $api.useQuery(
+  const { data: assetUrlData } = $api.useQuery(
     "get",
     "/api/jobs/{job_id}/asset-url",
     {
@@ -243,10 +187,10 @@ function ProjectComponent() {
     {
       enabled: !!latestCompletedJob?.job_id,
       staleTime: 0, // Always fetch fresh data
-      onSuccess: (data: any) => {
+      onSuccess: () => {
         // Asset URL API call successful
       },
-      onError: (error: any) => {
+      onError: () => {
         // Asset URL API call failed
       }
     }
@@ -281,126 +225,22 @@ function ProjectComponent() {
   
   const assetUrl = assetUrlData?.signed_url;
 
-  // Test the asset URL if it exists
-  useEffect(() => {
-    setAssetLoadError(null); // Reset error state when testing new URL
-    
-    if (assetUrl) {
-      fetch(assetUrl)
-        .then(response => {
-          if (response.ok) {
-            // Asset URL is accessible
-          } else {
-            setAssetLoadError(`Asset file not accessible (${response.status})`);
-          }
-        })
-        .catch(error => {
-          setAssetLoadError(`Network error: ${error.message}`);
-        });
-    }
-  }, [assetUrl, assetUrlData]);
+  // Check specifically for video jobs in progress
+  const videoJobsInProgress = jobs.filter(job => 
+    job.job_type === "Video" && 
+    job.status === "processing"
+  );
+  
+  const hasVideoJobsInProgress = videoJobsInProgress.length > 0;
 
-  // Add a manual refresh button for debugging
-  const handleRefresh = () => {
-    refetch()
-    // Also invalidate all related queries
-    queryClient.invalidateQueries({
-      queryKey: ['get', '/api/jobs']
-    })
-    jobs.forEach(job => {
-      if (job.status === "completed") {
-        queryClient.invalidateQueries({
-          queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: job.job_id } } }]
-        })
-      }
-    })
-  }
 
-  // Add a function to retry asset URL fetching
-  const handleRetryAsset = async () => {
-    if (!latestCompletedJob?.job_id) {
-      return;
-    }
-
-    setIsRetryingAsset(true);
-    setAssetLoadError(null);
-    
-    try {
-      // Manually trigger the asset URL query
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/jobs/${latestCompletedJob.job_id}/asset-url`);
-      const data = await response.json();
-      
-      if (response.ok && data.signed_url) {
-        // Test the new URL
-        const assetResponse = await fetch(data.signed_url);
-        if (assetResponse.ok) {
-          // Force a refetch of the asset URL data
-          refetch();
-        } else {
-          throw new Error(`Asset file still not accessible: ${assetResponse.status}`);
-        }
-      } else {
-        throw new Error(`Asset URL API returned error: ${response.status}`);
-      }
-    } catch (error) {
-      setAssetLoadError(error instanceof Error ? error.message : 'Failed to load asset');
-    } finally {
-      setIsRetryingAsset(false);
-    }
-  };
-
-  // Add a function to inspect the file content
-  const handleInspectFile = async () => {
-    if (!assetUrl) {
-      return;
-    }
-
-    try {
-      const response = await fetch(assetUrl);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-
-      // Try to read the first few bytes to determine file type
-      const arrayBuffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Check for common file signatures
-      const firstBytes = Array.from(uint8Array.slice(0, 8));
-      
-      if (firstBytes[0] === 0x7B) { // '{' character
-        // Try to parse as JSON
-        const text = new TextDecoder().decode(uint8Array);
-        try {
-          const json = JSON.parse(text);
-          // File is valid JSON
-        } catch (e) {
-          // Not valid JSON
-        }
-      } else if (firstBytes[0] === 0x50 && firstBytes[1] === 0x4B) { // PK (ZIP)
-        // File appears to be a ZIP archive
-      } else if (firstBytes[0] === 0x1F && firstBytes[1] === 0x8B) { // GZIP
-        // File appears to be GZIP compressed
-      } else if (firstBytes[0] === 0x73 && firstBytes[1] === 0x70 && firstBytes[2] === 0x6C && firstBytes[3] === 0x61 && firstBytes[4] === 0x74) { // "splat"
-        // File appears to be a .splat file
-      } else {
-        // Unknown file format
-      }
-      
-    } catch (error) {
-      // File inspection failed
-    }
-  };
 
   const { generateVideo } = useVideo({
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Refetch jobs after starting generation to get the new job
       setTimeout(() => refetch(), 1000)
     },
-    onError: (error) => {
+    onError: () => {
       // Video generation error handled silently
     }
   })
@@ -418,6 +258,12 @@ function ProjectComponent() {
   const handleSubmit = (prompt: string) => {
     generateVideo({ prompt, project_id: params.projectId })
   }
+
+  // Mock project data for now
+  const project = {
+    name: `Project ${params.projectId}`,
+    project_id: params.projectId
+  };
 
   // Show loading state
   // if (isLoading) {
@@ -489,9 +335,7 @@ function ProjectComponent() {
             errorMessage={
               hasCompletedJobButNoAsset 
                 ? `Job ${latestCompletedJob?.job_id} completed but asset file is missing. Try generating a new 3D asset.`
-                : assetLoadError 
-                  ? `Asset loading failed: ${assetLoadError}`
-                  : null
+                : null
             }
           />
         </div>

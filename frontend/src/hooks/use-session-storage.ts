@@ -41,7 +41,7 @@ export function useSessionStorage() {
 
   // Mutation to login using $api
   const loginMutation = $api.useMutation('get', '/api/auth/login', {
-    onSuccess: (data) => {
+    onSuccess: () => {
       // After successful login, refetch the user session
       refetch();
     },

@@ -104,8 +104,9 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
-              signOut(auth)
-              navigate({ to: "/" })
+              // TODO: Implement proper auth logout
+              console.log("Logout clicked")
+              navigate({ to: "/", search: {} } as any)
             }}>
               <LogOut />
               Log out

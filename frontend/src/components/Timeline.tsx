@@ -8,7 +8,7 @@ interface TimelineProps {
 }
 
 export default function Timeline(props: TimelineProps) {
-  const videoRef = useRef<HTMLVideoElement>(undefined)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0) // 0 to 1
   const [arrangeMode, setArrangeMode] = useState(false)
@@ -17,7 +17,7 @@ export default function Timeline(props: TimelineProps) {
 
   function handleMouseDown(e: React.MouseEvent) {
     setDragging(true)
-    updateProgress(e)
+    updateProgress(e.nativeEvent)
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
   }

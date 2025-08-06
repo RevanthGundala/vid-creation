@@ -28,7 +28,7 @@ export function useVideo(options?: GenerateVideoOptions) {
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
     const generateVideoMutation = $api.useMutation("post", "/api/jobs", {
-        onMutate: (variables) => {
+        onMutate: () => {
         },
         onSuccess: (data: Job) => { // Changed to Job type
             // The backend returns job_id, not project_id

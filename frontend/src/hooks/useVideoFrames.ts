@@ -43,7 +43,6 @@ export const useVideoFrames = (
 // Hook for extracting frames with default settings
 export const useVideoFramesDefault = (videoUrl: string | null) => {
   return useVideoFrames(videoUrl, {
-    maxFrames: 30,
     frameInterval: 100,
     quality: 0.8,
   })
@@ -52,7 +51,6 @@ export const useVideoFramesDefault = (videoUrl: string | null) => {
 // Hook for high-quality frame extraction
 export const useVideoFramesHighQuality = (videoUrl: string | null) => {
   return useVideoFrames(videoUrl, {
-    maxFrames: 60,
     frameInterval: 50,
     quality: 1.0,
   })
@@ -61,7 +59,6 @@ export const useVideoFramesHighQuality = (videoUrl: string | null) => {
 // Hook for quick preview frames
 export const useVideoFramesPreview = (videoUrl: string | null) => {
   return useVideoFrames(videoUrl, {
-    maxFrames: 10,
     frameInterval: 200,
     quality: 0.6,
   })

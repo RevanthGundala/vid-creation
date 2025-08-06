@@ -1,8 +1,6 @@
 import { SidebarIcon } from "lucide-react"
-import { Link, useNavigate } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
-
-import { SearchForm } from "@/components/search-form"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,7 +28,7 @@ export function SiteHeader({ title }: SiteHeaderProps) {
 
   const handleConfirmNavigation = () => {
     setShowConfirmModal(false)
-    navigate({ to: "/projects" })
+    navigate({ to: "/projects" } as any)
   }
 
   const handleCancelNavigation = () => {

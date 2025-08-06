@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import VideoFrameExtractor from './VideoFrameExtractor'
 import { Button } from '../components/ui/button'
 
 export interface ToolbarProps {
@@ -14,10 +13,7 @@ enum Tool {
 }
 
 export default function Toolbar(props: ToolbarProps) {
-  let videoRef: HTMLVideoElement | undefined
-
   const [activeTool, setActiveTool] = useState<Tool>(Tool.DEFAULT)
-  const [selectedFrame, setSelectedFrame] = useState<ImageBitmap | null>(null)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const target = e.target as HTMLInputElement
@@ -28,10 +24,6 @@ export default function Toolbar(props: ToolbarProps) {
     } else {
       props.setVideoUrl(null)
     }
-  }
-
-  const handleFrameSelect = (frame: ImageBitmap) => {
-    setSelectedFrame(frame)
   }
 
   return (

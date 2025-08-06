@@ -1,7 +1,6 @@
 
 import { $api } from ".";
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
 
 // Project type based on the backend schema
 export interface Project {
@@ -52,8 +51,8 @@ export function useProject(projectId: string, options: UseProjectOptions = {}) {
   const { data: projectJobs, error: jobsError, isLoading: isJobsLoading, refetch } = $api.useQuery(
     "get", 
     `/api/jobs`,
+    undefined,
     {
-      params: { path: { project_id: projectId } },
       enabled: enabled && !!projectId,
     }
   );

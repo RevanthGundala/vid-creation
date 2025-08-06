@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useAuth } from '../contexts/auth-context';
 import { useNavigate } from '@tanstack/react-router'
 

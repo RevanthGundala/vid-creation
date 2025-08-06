@@ -1,4 +1,5 @@
 import logging
+import os
 import requests
 from pathlib import Path
 from datetime import datetime
@@ -105,38 +106,40 @@ class JobProcessor:
             logger.info(f"Starting video generation for job {job_id} with prompt: {prompt}")
 
             # TODO: Customize the video generation parameters
-            # output = replicate.run(
-            #     config.REPLICATE_VIDEO_MODEL_ID,
-            #     input={
-            #         "prompt": prompt,
-            #         "go_fast": True,
-            #         "num_frames": 81,
-            #         "resolution": "480p",
-            #         "aspect_ratio": "16:9",
-            #         "sample_shift": 12,
-            #         "frames_per_second": 16
-            #     } 
-            # )
+            if os.getenv("REPLICATE_API_TOKEN"):
+                output = replicate.run(
+                    config.REPLICATE_VIDEO_MODEL_ID,
+                    input={
+                        "prompt": prompt,
+                        "go_fast": True,
+                        "num_frames": 81,
+                        "resolution": "480p",
+                        "aspect_ratio": "16:9",
+                        "sample_shift": 12,
+                        "frames_per_second": 16
+                    } 
+                )
 
-            # # Get the direct URL from Replicate output
-            # # Handle the output properly - it might be a FileOutput object or string
-            # logger.info(f"Replicate output type: {type(output)}")
-            # logger.info(f"Replicate output: {output}")
-            
-            # if hasattr(output, 'url'):
-            #     # If it's a FileOutput object
-            #     replicate_video_url = output.url()
-            #     logger.info(f"Extracted URL from FileOutput: {replicate_video_url}")
-            # else:
-            #     # If it's already a string URL
-            #     replicate_video_url = str(output)
-            #     logger.info(f"Using output as string URL: {replicate_video_url}")
-            
-            # # Clear the output variable to prevent any accidental storage
-            # del output
+                # Get the direct URL from Replicate output
+                # Handle the output properly - it might be a FileOutput object or string
+                logger.info(f"Replicate output type: {type(output)}")
+                logger.info(f"Replicate output: {output}")
+                
+                if hasattr(output, 'url'):
+                    # If it's a FileOutput object
+                    replicate_video_url = output.url()
+                    logger.info(f"Extracted URL from FileOutput: {replicate_video_url}")
+                else:
+                    # If it's already a string URL
+                    replicate_video_url = str(output)
+                    logger.info(f"Using output as string URL: {replicate_video_url}")
+                
+                # Clear the output variable to prevent any accidental storage
+                del output
+            else: 
+                replicate_video_url = "https://replicate.delivery/xezq/HAevwZ966eiJxkd7jByCStY9jALtnraJ8z6bNsnJV9GXiGIVA/output.mp4"
+                logger.info(f"Using placeholder URL: {replicate_video_url}")
 
-            # Download the video from Replicate and upload to our storage
-            replicate_video_url = "https://replicate.delivery/xezq/HAevwZ966eiJxkd7jByCStY9jALtnraJ8z6bNsnJV9GXiGIVA/output.mp4"
             response = requests.get(replicate_video_url)
             response.raise_for_status()  # Raise exception for bad status codes
             
