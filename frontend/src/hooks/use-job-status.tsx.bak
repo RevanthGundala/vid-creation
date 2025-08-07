@@ -21,11 +21,10 @@ export function useJobStatus({
   onError,
   enableWebhook = true,
   staleTime = 0, // Always consider data stale to allow real-time updates
-  refetchInterval = 5000, // Default to 5s polling as fallback
+  refetchInterval = false, // Disable polling by default, rely on webhooks
 }: UseJobStatusOptions) {
   const queryClient = useQueryClient();
   const [isWebhookConnected, setIsWebhookConnected] = useState(false);
-  const [lastWebhookActivity, setLastWebhookActivity] = useState<number | null>(null);
   const hasShownError = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   
@@ -40,10 +39,6 @@ export function useJobStatus({
     onCompleteRef.current = onComplete;
     onErrorRef.current = onError;
   }, [onStatusChange, onComplete, onError]);
-
-  // Determine if we should use polling based on webhook activity
-  const shouldPoll = !enableWebhook || !isWebhookConnected || 
-    (lastWebhookActivity && (Date.now() - lastWebhookActivity > 10000)); // 10s without activity
 
   // Use $api.useQuery for job status
   const {
@@ -61,7 +56,7 @@ export function useJobStatus({
     },
     {
       staleTime,
-      refetchInterval: shouldPoll ? refetchInterval : false,
+      refetchInterval: refetchInterval,
       enabled: !!jobId,
       retry: (failureCount, error: any) => {
         // Don't retry on 404 or other client errors
@@ -122,20 +117,12 @@ export function useJobStatus({
         eventSource.onopen = () => {
           console.log(`Webhook connected for job ${jobId}`);
           setIsWebhookConnected(true);
-          setLastWebhookActivity(Date.now());
         };
 
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
             console.log('Webhook message received:', data);
-            setLastWebhookActivity(Date.now());
-            
-            // Skip connection/heartbeat messages that don't have job status
-            if (data.type === 'connected' || !data.status) {
-              console.log('Skipping non-status webhook message:', data);
-              return;
-            }
             
             // Update job status in cache
             queryClient.setQueryData(
@@ -170,7 +157,6 @@ export function useJobStatus({
         eventSource.onerror = (error) => {
           console.error(`Webhook error for job ${jobId}:`, error);
           setIsWebhookConnected(false);
-          setLastWebhookActivity(null);
           eventSource.close();
           
           // Fallback to polling if webhook fails
@@ -183,7 +169,6 @@ export function useJobStatus({
       } catch (error) {
         console.error('Failed to connect to webhook:', error);
         setIsWebhookConnected(false);
-        setLastWebhookActivity(null);
       }
     };
 
@@ -195,7 +180,6 @@ export function useJobStatus({
         eventSourceRef.current = null;
       }
       setIsWebhookConnected(false);
-      setLastWebhookActivity(null);
     };
   }, [jobId, enableWebhook, queryClient, refetch]);
 
@@ -206,7 +190,6 @@ export function useJobStatus({
       : "Failed to fetch job status") : null,
     isLoading,
     isWebhookConnected,
-    shouldPoll,
     refetch,
   };
 }
@@ -256,4 +239,4 @@ export function useUserJobs(limit: number = 50) {
       : "Failed to fetch jobs") : null,
     refetch,
   };
-}
+} 
