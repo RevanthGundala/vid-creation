@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { SHARED_PROJECT_ID } from '../../../config/shared-project'
 
 export const Route = createFileRoute('/_auth/projects/')({

@@ -1,7 +1,7 @@
-# Use a more specific base image for better caching
+# Use standard Python base image - much lighter without ML dependencies
 FROM python:3.11-slim as builder
 
-# Install system dependencies needed for building wheels in a single layer
+# Install system dependencies and uv in a single layer
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -13,7 +13,7 @@ WORKDIR /app
 # Copy dependency files first for better layer caching
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies with better caching and parallel processing
+# Install dependencies with aggressive caching
 RUN uv pip install --system --no-cache . --no-deps && \
     uv pip install --system --no-cache .
 
