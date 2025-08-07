@@ -29,7 +29,10 @@ async def publish_job_update(job_id: str, message: dict):
     
     # Add message to queue
     job_message_queues[job_id].append(message)
-    
+
+    # TODO: Potential race condition here. 
+    # If multiple threads call this function, the event may be set multiple times.
+    # This is not a problem for our use case, but it is something to be aware of.
     # Notify all waiting streams for this job
     if job_id in job_events:
         job_events[job_id].set()
