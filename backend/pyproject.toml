@@ -18,6 +18,7 @@ dependencies = [
     "pulumi>=3.187.0",
     "pulumi-gcp>=8.39.0",
     "replicate>=1.0.7",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.scripts]
