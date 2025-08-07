@@ -88,7 +88,16 @@ export function useVideo(options?: GenerateVideoOptions) {
                 startedToastIdRef.current = null;
             }
             
-            toast.success("Video generation completed!");
+            // Check if we have a real Replicate URL or using backup
+            const hasReplicateUrl = result && 
+                result.replicate_url && 
+                result.replicate_url.trim() !== "";
+            
+            const message = hasReplicateUrl 
+                ? "Video generation completed!" 
+                : "Replicate API token not set, using back up video";
+            
+            toast.success(message);
             setCurrentJobId(null);
         },
         onError: (error) => {

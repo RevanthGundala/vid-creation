@@ -130,7 +130,8 @@ class JobProcessor:
                 logger.info(f"Replicate output: {output}")
                 
                 if hasattr(output, 'url'):
-                    replicate_video_url = output.url()
+                    url_attr = output.url
+                    replicate_video_url = url_attr() if callable(url_attr) else url_attr
                     logger.info(f"Extracted URL from FileOutput: {replicate_video_url}")
                 else:
                     replicate_video_url = str(output)
