@@ -197,7 +197,9 @@ class GCPFileStorageRepository(FileStorageRepository[Dict[str, Any]]):
     
     async def file_exists(self, blob_name: str) -> bool:
         """Check if a file exists in Google Cloud Storage."""
-        return self._storage.file_exists(blob_name)
+        bucket = self._storage.bucket(self._bucket_name)
+        blob = bucket.blob(blob_name)
+        return blob.exists()
     
     async def list_files(self, prefix: Optional[str] = None) -> List[str]:
         """List all files in the bucket, optionally filtering by a prefix."""

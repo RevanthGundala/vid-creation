@@ -33,11 +33,6 @@ export function useVideo(options?: GenerateVideoOptions) {
         onMutate: () => {
         },
         onSuccess: (data: Job) => { // Changed to Job type
-            // Add debugging to see what we're getting
-            console.log("🎯 onSuccess called with data:", data);
-            console.log("🎯 data type:", typeof data);
-            console.log("🎯 data.job_id:", data?.job_id);
-            
             // Add null checks to prevent TypeError
             if (data && data.job_id) {
                 setCurrentJobId(data.job_id);
@@ -62,14 +57,11 @@ export function useVideo(options?: GenerateVideoOptions) {
     const jobStatus = useJobStatus({
         jobId: currentJobId || "",
         onStatusChange: (status) => {
-            if (status === "connected") {
-                toast.success("Video generation completed!");
-                // We only show a toast when the webhook connects successfully
-            }
         },
         onComplete: (result) => {
             console.log("Job completed:", result);
             options?.onJobComplete?.(result);
+            toast.dismiss();
             toast.success("Video generation completed!");
             setCurrentJobId(null);
             setJobCreationTime(null);
@@ -133,16 +125,6 @@ export function useVideo(options?: GenerateVideoOptions) {
         ) && (!options?.projectId || !jobStatus?.jobStatus?.project_id || jobStatus.jobStatus.project_id === options.projectId));
   const isGenerating = Boolean(isGeneratingRaw);
     
-    console.log('🔍 useVideo debug:', {
-        generateVideoMutationIsPending: generateVideoMutation.isPending,
-        currentJobId,
-        jobStatusStatus: jobStatus?.jobStatus?.status,
-        jobStatusProjectId: jobStatus?.jobStatus?.project_id,
-        expectedProjectId: options?.projectId,
-        jobCreationTime,
-        isGenerating
-    });
-
     return {
         generateVideo,
         isGenerating,

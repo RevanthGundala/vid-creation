@@ -5,6 +5,7 @@ from typing import Optional
 from uuid import uuid4
 from src.repositories.base import DatabaseRepository
 from src.schemas.job import JobStatus, JobUpdate, WebhookNotification, Job, JobCreate
+from src.api.webhooks import publish_job_update
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,23 @@ class JobService:
         
         # Update in database using repository
         await self.db.update(job_id, current_data)
+        
+        # Publish job update to webhook streams
+        status_value = current_data["status"]
+        # Convert JobStatus enum to string value if it's an enum
+        if hasattr(status_value, 'value'):
+            status_value = status_value.value
+        
+        update_message = {
+            "type": "job_update",
+            "job_id": job_id,
+            "status": status_value,
+            "progress": current_data.get("progress"),
+            "result": current_data.get("result"),
+            "error": current_data.get("error"),
+            "timestamp": current_data["modified_at"].isoformat()
+        }
+        await publish_job_update(job_id, update_message)
         
         # Send webhook notification if URL is provided
         if current_data.get("webhook_url"):

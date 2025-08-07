@@ -31,144 +31,7 @@ function ProjectComponent() {
     }
   })
 
-  // Enhanced polling logic that continues for a short time after jobs complete
-  useEffect(() => {
-    const currentJobCount = jobs.length
-    const hasIncompleteJobs = jobs.some(job => 
-      (job.job_type === "Object" || job.job_type === "Video") && 
-      job.status !== "completed" && 
-      job.status !== "failed"
-    );
-    
-    // Check if any jobs just completed
-    const hasNewlyCompletedJobs = jobs.some(job => 
-      (job.job_type === "Object" || job.job_type === "Video") && 
-      job.status === "completed"
-    );
-    
-    // If job count changed, we have incomplete jobs, or we have newly completed jobs, continue polling
-    const shouldPoll = hasIncompleteJobs || currentJobCount !== lastJobCount || hasNewlyCompletedJobs
-    
-    if (shouldPoll) {
-      setLastJobCount(currentJobCount)
-      
-      const interval = setInterval(() => {
-        refetch()
-        
-        // Invalidate jobs query
-        queryClient.invalidateQueries({
-          queryKey: ['get', '/api/jobs']
-        })
-        
-        // Invalidate asset URL queries for completed jobs
-        jobs.forEach(job => {
-          if (job.status === "completed") {
-            queryClient.invalidateQueries({
-              queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: job.job_id } } }]
-            })
-          }
-        })
-      }, 3000); // Poll every 3 seconds for faster updates
-
-      // If we have newly completed jobs, continue polling for a bit longer to ensure UI updates
-      if (hasNewlyCompletedJobs) {
-        const completionTimeout = setTimeout(() => {
-          // Force one more refetch after a delay to ensure we get the latest data
-          refetch()
-          queryClient.invalidateQueries({
-            queryKey: ['get', '/api/jobs']
-          })
-          jobs.forEach(job => {
-            if (job.status === "completed") {
-              queryClient.invalidateQueries({
-                queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: job.job_id } } }]
-              })
-            }
-          })
-        }, 2000); // Wait 2 seconds after completion
-
-        return () => {
-          clearInterval(interval);
-          clearTimeout(completionTimeout);
-        };
-      }
-
-      return () => clearInterval(interval);
-    }
-  }, [jobs, refetch, queryClient, lastJobCount]);
-
-  // Webhook-based real-time updates for all jobs in the project
-  useEffect(() => {
-    if (!jobs.length) return;
-
-    // Find jobs that are in progress and need webhook monitoring
-    const jobsToMonitor = jobs.filter(job => 
-      (job.job_type === "Object" || job.job_type === "Video") && 
-      job.status === "processing"
-    );
-
-    if (!jobsToMonitor.length) return;
-
-    const eventSources: EventSource[] = [];
-
-    // Set up webhook connections for each job in progress
-    jobsToMonitor.forEach(job => {
-      try {
-        const webhookUrl = `${import.meta.env.VITE_API_URL}/api/webhooks/${job.job_id}/stream`;
-        const eventSource = new EventSource(webhookUrl);
-        
-        eventSource.onopen = () => {
-          console.log(`Webhook connected for job ${job.job_id}`);
-        };
-
-        eventSource.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            console.log('Webhook message received for job:', job.job_id, data);
-            
-            // Update job status in cache
-            queryClient.setQueryData(
-              ['get', '/api/jobs/{job_id}', { params: { path: { job_id: job.job_id } } }],
-              data
-            );
-            
-            // If job completed, invalidate related queries and refetch project data
-            if (data.status === "completed") {
-              queryClient.invalidateQueries({
-                queryKey: ['get', '/api/jobs']
-              });
-              queryClient.invalidateQueries({
-                queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: job.job_id } } }]
-              });
-              
-              // Refetch project data to get updated job list
-              setTimeout(() => {
-                refetch();
-              }, 500);
-            }
-          } catch (parseError) {
-            console.error('Failed to parse webhook message:', parseError);
-          }
-        };
-
-        eventSource.onerror = (error) => {
-          console.error(`Webhook error for job ${job.job_id}:`, error);
-          eventSource.close();
-        };
-
-        eventSources.push(eventSource);
-      } catch (error) {
-        console.error('Failed to connect to webhook for job:', job.job_id, error);
-      }
-    });
-
-    // Cleanup function
-    return () => {
-      eventSources.forEach(eventSource => {
-        eventSource.close();
-      });
-    };
-  }, [jobs, queryClient, refetch]);
+ 
 
   // Find the latest completed 3D asset job
   const latestCompletedJob = jobs
@@ -236,9 +99,8 @@ function ProjectComponent() {
 
 
   const { generateVideo, isGenerating: isGeneratingVideo } = useVideo({
+    projectId: params.projectId, // ✅ Add this line!
     onSuccess: () => {
-      // Refetch jobs after starting generation to get the new job
-      setTimeout(() => refetch(), 1000)
     },
     onError: () => {
       // Video generation error handled silently
@@ -247,7 +109,6 @@ function ProjectComponent() {
 
   // Use project jobs as the single source of truth for loading states
   const isGenerating = hasVideoJobsInProgress || isGeneratingVideo;
-
   console.log('🎬 Project detail debug:', {
     isGenerating,
     hasVideoJobsInProgress,
@@ -265,14 +126,6 @@ function ProjectComponent() {
     project_id: params.projectId
   };
 
-  // Show loading state
-  // if (isLoading) {
-  //   return (
-  //     <div className="relative min-h-screen bg-[#282c34] text-white flex items-center justify-center">
-  //       <div className="text-xl">Loading project...</div>
-  //     </div>
-  //   )
-  // }
 
   // Show error state
   if (error) {

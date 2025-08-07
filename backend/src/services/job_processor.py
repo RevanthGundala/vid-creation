@@ -136,25 +136,42 @@ class JobProcessor:
                 
                 # Clear the output variable to prevent any accidental storage
                 del output
+                response = requests.get(replicate_video_url)
+                response.raise_for_status()  # Raise exception for bad status codes
+                
+                video_content = response.content
+            
             else: 
-                replicate_video_url = "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4"
-                logger.info(f"Using placeholder URL: {replicate_video_url}")
+                # Use an existing video from our bucket as backup
+                backup_video_path = "134a3dd8-66e4-4561-ac42-4391585e7cf1/video.mp4"
+                logger.info(f"Using backup video from bucket: {backup_video_path}")
+                replicate_video_url = ""
+                # Check if the backup video exists
+                if await self.file_storage.file_exists(backup_video_path):
+                    # Download the backup video from our storage
+                    temp_file = f"/tmp/backup_{job_id}.mp4"
+                    if await self.file_storage.download_file(backup_video_path, temp_file):
+                        with open(temp_file, 'rb') as f:
+                            video_content = f.read()
+                        # Clean up temp file
+                        os.remove(temp_file)
+                    else:
+                        raise ValueError(f"Failed to download backup video from {backup_video_path}")
+                else:
+                    # If backup doesn't exist, create a simple placeholder
+                    logger.warning(f"Backup video not found at {backup_video_path}, creating placeholder")
+                    video_content = b'\x00' * 1024
+                
+                # Define storage paths
+                storage_path = f"assets/{job_id}/video.mp4"
+                output_filename = f"{job_id}.mp4"
 
-            response = requests.get(replicate_video_url)
-            response.raise_for_status()  # Raise exception for bad status codes
-            
-            video_content = response.content
-            
-            # Define storage paths
-            storage_path = f"assets/{job_id}/video.mp4"
-            output_filename = f"{job_id}.mp4"
-
-            # Upload the video content to our storage
-            upload_result = await self.file_storage.upload_bytes(
-                video_content, 
-                storage_path, 
-                content_type="video/mp4"
-            )
+                # Upload the video content to our storage
+                upload_result = await self.file_storage.upload_bytes(
+                    video_content, 
+                    storage_path, 
+                    content_type="video/mp4"
+                )
 
             signed_url = await self.file_storage.generate_download_url(storage_path, 86400)  # 24 hours
             print(f"✅ Generated signed URL: {signed_url[:100]}...")  # Show first 100 chars
