@@ -92,7 +92,6 @@ function ProjectComponent() {
           clearTimeout(completionTimeout);
         };
       }
-
       return () => clearInterval(interval);
     }
   }, [jobs, refetch, queryClient, lastJobCount]);
@@ -104,7 +103,7 @@ function ProjectComponent() {
     // Find jobs that are in progress and need webhook monitoring
     const jobsToMonitor = jobs.filter(job => 
       (job.job_type === "Object" || job.job_type === "Video") && 
-      job.status === "processing"
+      (job.status === "processing" || job.status === "queued")
     );
 
     if (!jobsToMonitor.length) return;
@@ -228,7 +227,7 @@ function ProjectComponent() {
   // Check specifically for video jobs in progress
   const videoJobsInProgress = jobs.filter(job => 
     job.job_type === "Video" && 
-    job.status === "processing"
+    (job.status === "processing" || job.status === "queued")
   );
   
   const hasVideoJobsInProgress = videoJobsInProgress.length > 0;
