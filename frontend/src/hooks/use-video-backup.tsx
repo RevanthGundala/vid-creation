@@ -75,21 +75,24 @@ export function useVideo(options?: GenerateVideoOptions) {
         },
     });
 
-    // Clear currentJobId only when we have definitive status (not on undefined status)
+    // Clear currentJobId if the job is completed, failed, or doesn't exist
     useEffect(() => {
-        if (currentJobId && jobStatus?.jobStatus) {
+        if (currentJobId) {
+            // If job status is undefined, the job might not exist
+            if (!jobStatus?.jobStatus) {
+                console.log(`Job ${currentJobId} status is undefined, clearing currentJobId`);
+                setCurrentJobId(null);
+                return;
+            }
+            
             // If job is completed or failed, clear the currentJobId
-            if (["completed", "failed"].includes(jobStatus.jobStatus.status)) {
+            if (jobStatus.jobStatus.status && 
+                ["completed", "failed"].includes(jobStatus.jobStatus.status)) {
                 console.log(`Job ${currentJobId} is ${jobStatus.jobStatus.status}, clearing currentJobId`);
                 setCurrentJobId(null);
             }
-        } else if (currentJobId && jobStatus.error) {
-            // Only clear if there's an actual error (job doesn't exist)
-            console.log(`Job ${currentJobId} has error, clearing currentJobId:`, jobStatus.error);
-            setCurrentJobId(null);
         }
-        // Don't clear when jobStatus is undefined - let the polling work
-    }, [currentJobId, jobStatus?.jobStatus, jobStatus.error]);
+    }, [currentJobId, jobStatus?.jobStatus]);
 
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
@@ -150,4 +153,4 @@ export function useVideo(options?: GenerateVideoOptions) {
         isJobLoading: jobStatus.isLoading,
         jobError: jobStatus.error,
     };
-}
+} 
