@@ -245,13 +245,13 @@ function ProjectComponent() {
     }
   })
 
-  // Use project jobs as the single source of truth for loading states
-  const isGenerating = hasVideoJobsInProgress;
+  // Show loading immediately when mutation starts, and continue while jobs are in progress
+  const isGenerating = useVideoIsGenerating || hasVideoJobsInProgress;
   
   console.log('🎬 Project detail debug:', {
-    isGenerating: isGenerating, // From jobs array (single source of truth)
-    useVideoIsGenerating, // From useVideo hook (for comparison)
-    hasVideoJobsInProgress, // From jobs array
+    isGenerating: isGenerating, // Combined: mutation pending OR jobs in progress
+    useVideoIsGenerating, // From useVideo hook (mutation pending)
+    hasVideoJobsInProgress, // From jobs array (jobs in progress)
     videoJobsInProgress: videoJobsInProgress.map(job => ({ id: job.job_id, status: job.status })),
     allJobs: jobs.map(job => ({ id: job.job_id, type: job.job_type, status: job.status }))
   });
