@@ -97,7 +97,7 @@ export function useJobStatus({
         onErrorRef.current(jobStatus.error || "Job failed");
       }
     }
-  }, [jobStatus, queryClient, jobId]);
+  }, [jobStatus?.status, queryClient, jobId]);
 
   // Handle query errors
   useEffect(() => {
