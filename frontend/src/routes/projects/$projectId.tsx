@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 import { useVideo, useProject, $api } from '../../hooks'
 import { toast } from 'sonner'
 import { Editor } from '@/components/editor'
@@ -10,7 +9,6 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { useQueryClient } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/projects/$projectId')({
   component: ProjectComponent,
@@ -18,11 +16,9 @@ export const Route = createFileRoute('/projects/$projectId')({
 
 function ProjectComponent() {
   const params = Route.useParams()
-  const queryClient = useQueryClient()
-  const [lastJobCount, setLastJobCount] = useState(0)
 
   // Use the useProject hook instead of local state and fetchProject
-  const { error, jobs, refetch } = useProject(params.projectId, {
+  const { error, jobs } = useProject(params.projectId, {
     onSuccess: () => {
       // Project loaded successfully
     },

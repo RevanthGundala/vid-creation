@@ -27,7 +27,6 @@ interface GenerateVideoOptions {
 
 export function useVideo(options?: GenerateVideoOptions) {
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
-    const [jobCreationTime, setJobCreationTime] = useState<number | null>(null);
     
     // Use refs to track toast IDs and completion state
     const startedToastIdRef = useRef<string | number | null>(null);
@@ -42,7 +41,6 @@ export function useVideo(options?: GenerateVideoOptions) {
             // Add null checks to prevent TypeError
             if (data && data.job_id) {
                 setCurrentJobId(data.job_id);
-                setJobCreationTime(Date.now());
                 options?.onSuccess?.(data);
                 
                 // Dismiss any existing toasts and show the started message
@@ -92,7 +90,6 @@ export function useVideo(options?: GenerateVideoOptions) {
             
             toast.success("Video generation completed!");
             setCurrentJobId(null);
-            setJobCreationTime(null);
         },
         onError: (error) => {
             console.error("Job failed:", error);
@@ -107,7 +104,6 @@ export function useVideo(options?: GenerateVideoOptions) {
             toast.error(`Video generation failed: ${error}`);
             // Clear the current job immediately when failed
             setCurrentJobId(null);
-            setJobCreationTime(null);
             hasCompletedRef.current = false;
         },
     });

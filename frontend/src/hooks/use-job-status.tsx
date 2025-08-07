@@ -25,7 +25,6 @@ export function useJobStatus({
 }: UseJobStatusOptions) {
   const queryClient = useQueryClient();
   const [isWebhookConnected, setIsWebhookConnected] = useState(false);
-  const [lastWebhookActivity, setLastWebhookActivity] = useState<number | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   
   // Store callbacks in refs to prevent infinite loops
@@ -67,7 +66,6 @@ export function useJobStatus({
         eventSource.onopen = () => {
           console.log(`Webhook connected for job ${jobId}`);
           setIsWebhookConnected(true);
-          setLastWebhookActivity(Date.now());
           onStatusChangeRef.current?.('connected');
           refetch();
         };
@@ -76,7 +74,6 @@ export function useJobStatus({
           try {
             const data = JSON.parse(event.data);
             console.log('Webhook message received:', data);
-            setLastWebhookActivity(Date.now());
             
             // Skip connection messages - only process actual job status updates
             if (data.type === 'connected') {
@@ -123,7 +120,6 @@ export function useJobStatus({
         eventSource.onerror = (error) => {
           console.error(`Webhook error for job ${jobId}:`, error);
           setIsWebhookConnected(false);
-          setLastWebhookActivity(null);
           eventSource.close();
           
           // Fallback to polling if webhook fails
@@ -136,7 +132,6 @@ export function useJobStatus({
       } catch (error) {
         console.error('Failed to connect to webhook:', error);
         setIsWebhookConnected(false);
-        setLastWebhookActivity(null);
       }
     };
 
@@ -148,7 +143,6 @@ export function useJobStatus({
         eventSourceRef.current = null;
       }
       setIsWebhookConnected(false);
-      setLastWebhookActivity(null);
     };
   }, [jobId, enableWebhook, queryClient, refetch]);
 
