@@ -26,7 +26,6 @@ export function useJobStatus({
   const queryClient = useQueryClient();
   const [isWebhookConnected, setIsWebhookConnected] = useState(false);
   const [lastWebhookActivity, setLastWebhookActivity] = useState<number | null>(null);
-  const hasShownError = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   
   // Store callbacks in refs to prevent infinite loops

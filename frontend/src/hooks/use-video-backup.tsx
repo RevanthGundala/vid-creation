@@ -1,7 +1,7 @@
 import { $api } from "../hooks";
 import { toast } from "sonner";
 import { useJobStatus } from "./use-job-status";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { components } from "../types/api";
 
 type JobCreate = components["schemas"]["JobCreate"];
