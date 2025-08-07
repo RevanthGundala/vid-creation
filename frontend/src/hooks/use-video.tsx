@@ -1,7 +1,7 @@
 import { $api } from "../hooks";
 import { toast } from "sonner";
 import { useJobStatus } from "./use-job-status";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { components } from "../types/api";
 
 type JobCreate = components["schemas"]["JobCreate"];
@@ -28,17 +28,30 @@ interface GenerateVideoOptions {
 export function useVideo(options?: GenerateVideoOptions) {
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
     const [jobCreationTime, setJobCreationTime] = useState<number | null>(null);
+    
+    // Use refs to track toast IDs and completion state
+    const startedToastIdRef = useRef<string | number | null>(null);
+    const hasCompletedRef = useRef<boolean>(false);
 
     const generateVideoMutation = $api.useMutation("post", "/api/jobs", {
         onMutate: () => {
+            // Reset completion state when starting a new job
+            hasCompletedRef.current = false;
         },
-        onSuccess: (data: Job) => { // Changed to Job type
+        onSuccess: (data: Job) => {
             // Add null checks to prevent TypeError
             if (data && data.job_id) {
                 setCurrentJobId(data.job_id);
                 setJobCreationTime(Date.now());
                 options?.onSuccess?.(data);
-                toast.success("Video generation started!");
+                
+                // Dismiss any existing toasts and show the started message
+                if (startedToastIdRef.current) {
+                    toast.dismiss(startedToastIdRef.current);
+                }
+                startedToastIdRef.current = toast.success("Video generation started!", {
+                    duration: 5000, // Keep it for 5 seconds
+                });
             } else {
                 console.error("❌ Invalid response data:", data);
                 options?.onError?.("Invalid response from server");
@@ -57,11 +70,26 @@ export function useVideo(options?: GenerateVideoOptions) {
     const jobStatus = useJobStatus({
         jobId: currentJobId || "",
         onStatusChange: (status) => {
+            console.log("Job status changed:", status);
         },
         onComplete: (result) => {
+            // Prevent duplicate completion handling
+            if (hasCompletedRef.current) {
+                console.log("Job completion already handled, ignoring duplicate");
+                return;
+            }
+            
             console.log("Job completed:", result);
+            hasCompletedRef.current = true;
+            
             options?.onJobComplete?.(result);
-            toast.dismiss();
+            
+            // Dismiss the "started" toast and show completion
+            if (startedToastIdRef.current) {
+                toast.dismiss(startedToastIdRef.current);
+                startedToastIdRef.current = null;
+            }
+            
             toast.success("Video generation completed!");
             setCurrentJobId(null);
             setJobCreationTime(null);
@@ -69,13 +97,20 @@ export function useVideo(options?: GenerateVideoOptions) {
         onError: (error) => {
             console.error("Job failed:", error);
             options?.onJobError?.(error);
+            
+            // Dismiss the "started" toast and show error
+            if (startedToastIdRef.current) {
+                toast.dismiss(startedToastIdRef.current);
+                startedToastIdRef.current = null;
+            }
+            
             toast.error(`Video generation failed: ${error}`);
             // Clear the current job immediately when failed
             setCurrentJobId(null);
             setJobCreationTime(null);
+            hasCompletedRef.current = false;
         },
     });
-
 
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
@@ -123,7 +158,7 @@ export function useVideo(options?: GenerateVideoOptions) {
             (jobStatus?.jobStatus?.status &&
              ["queued", "processing"].includes(jobStatus.jobStatus.status))
         ) && (!options?.projectId || !jobStatus?.jobStatus?.project_id || jobStatus.jobStatus.project_id === options.projectId));
-  const isGenerating = Boolean(isGeneratingRaw);
+    const isGenerating = Boolean(isGeneratingRaw);
     
     return {
         generateVideo,

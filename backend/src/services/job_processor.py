@@ -105,6 +105,11 @@ class JobProcessor:
                 raise ValueError(f"Job {job_id} failed: prompt is required")
             logger.info(f"Starting video generation for job {job_id} with prompt: {prompt}")
 
+            # Define storage paths (moved outside the if/else blocks)
+            storage_path = f"assets/{job_id}/video.mp4"
+            output_filename = f"{job_id}.mp4"
+            replicate_video_url = ""
+
             # TODO: Customize the video generation parameters
             if os.getenv("REPLICATE_API_TOKEN"):
                 output = replicate.run(
@@ -121,31 +126,28 @@ class JobProcessor:
                 )
 
                 # Get the direct URL from Replicate output
-                # Handle the output properly - it might be a FileOutput object or string
                 logger.info(f"Replicate output type: {type(output)}")
                 logger.info(f"Replicate output: {output}")
                 
                 if hasattr(output, 'url'):
-                    # If it's a FileOutput object
                     replicate_video_url = output.url()
                     logger.info(f"Extracted URL from FileOutput: {replicate_video_url}")
                 else:
-                    # If it's already a string URL
                     replicate_video_url = str(output)
                     logger.info(f"Using output as string URL: {replicate_video_url}")
                 
                 # Clear the output variable to prevent any accidental storage
                 del output
                 response = requests.get(replicate_video_url)
-                response.raise_for_status()  # Raise exception for bad status codes
+                response.raise_for_status()
                 
                 video_content = response.content
             
             else: 
                 # Use an existing video from our bucket as backup
-                backup_video_path = "134a3dd8-66e4-4561-ac42-4391585e7cf1/video.mp4"
+                backup_video_path = "assets/134a3dd8-66e4-4561-ac42-4391585e7cf1/video.mp4"
                 logger.info(f"Using backup video from bucket: {backup_video_path}")
-                replicate_video_url = ""
+                
                 # Check if the backup video exists
                 if await self.file_storage.file_exists(backup_video_path):
                     # Download the backup video from our storage
@@ -161,18 +163,15 @@ class JobProcessor:
                     # If backup doesn't exist, create a simple placeholder
                     logger.warning(f"Backup video not found at {backup_video_path}, creating placeholder")
                     video_content = b'\x00' * 1024
-                
-                # Define storage paths
-                storage_path = f"assets/{job_id}/video.mp4"
-                output_filename = f"{job_id}.mp4"
 
-                # Upload the video content to our storage
-                upload_result = await self.file_storage.upload_bytes(
-                    video_content, 
-                    storage_path, 
-                    content_type="video/mp4"
-                )
+            # Upload the video content to our storage (for both Replicate and backup flows)
+            upload_result = await self.file_storage.upload_bytes(
+                video_content, 
+                storage_path, 
+                content_type="video/mp4"
+            )
 
+            # Generate signed URL for the uploaded video
             signed_url = await self.file_storage.generate_download_url(storage_path, 86400)  # 24 hours
             print(f"✅ Generated signed URL: {signed_url[:100]}...")  # Show first 100 chars
             
