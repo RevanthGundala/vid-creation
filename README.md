@@ -11,6 +11,7 @@ A modern, full-stack application for AI-powered video generation. Built with Rea
 - **Asynchronous Processing**: Background job processing with status tracking
 
 ## NOTE: Enable REPLICATE_API_TOKEN to see text2vid generation, currently using a backup video. 
+## NOTE: Demo uses no-auth branch
 
 ## 🏗️ Architecture
 
