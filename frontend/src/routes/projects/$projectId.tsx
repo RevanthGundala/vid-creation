@@ -22,7 +22,7 @@ function ProjectComponent() {
   const [lastJobCount, setLastJobCount] = useState(0)
 
   // Use the useProject hook instead of local state and fetchProject
-  const { project, error, jobs, refetch } = useProject(params.projectId, {
+  const { error, jobs, refetch } = useProject(params.projectId, {
     onSuccess: () => {
       // Project loaded successfully
     },
@@ -92,6 +92,7 @@ function ProjectComponent() {
           clearTimeout(completionTimeout);
         };
       }
+
       return () => clearInterval(interval);
     }
   }, [jobs, refetch, queryClient, lastJobCount]);
@@ -103,7 +104,7 @@ function ProjectComponent() {
     // Find jobs that are in progress and need webhook monitoring
     const jobsToMonitor = jobs.filter(job => 
       (job.job_type === "Object" || job.job_type === "Video") && 
-      (job.status === "processing" || job.status === "queued")
+      job.status === "processing"
     );
 
     if (!jobsToMonitor.length) return;
@@ -227,34 +228,29 @@ function ProjectComponent() {
   // Check specifically for video jobs in progress
   const videoJobsInProgress = jobs.filter(job => 
     job.job_type === "Video" && 
-    (job.status === "processing" || job.status === "queued")
+    job.status === "processing"
   );
   
   const hasVideoJobsInProgress = videoJobsInProgress.length > 0;
 
 
 
-  const { generateVideo, isGenerating: useVideoIsGenerating } = useVideo({
-    projectId: params.projectId, // Pass the current project ID
+  const { generateVideo, isGenerating: isGeneratingVideo } = useVideo({
     onSuccess: () => {
-      // Refetch jobs immediately to get the new job
-      refetch();
+      // Refetch jobs after starting generation to get the new job
+      setTimeout(() => refetch(), 1000)
     },
     onError: () => {
       // Video generation error handled silently
-      console.error('Video generation failed');
     }
   })
 
-  // No need for localGeneratingState anymore - we can rely on hasVideoJobsInProgress
+  // Use project jobs as the single source of truth for loading states
+  const isGenerating = hasVideoJobsInProgress || isGeneratingVideo;
 
-  // Show loading when mutation is pending OR jobs are in progress
-  const isGenerating = useVideoIsGenerating || hasVideoJobsInProgress;
-  
   console.log('🎬 Project detail debug:', {
-    isGenerating: isGenerating, // Combined: mutation pending OR jobs in progress
-    useVideoIsGenerating, // From useVideo hook (mutation pending)
-    hasVideoJobsInProgress, // From jobs array (jobs in progress)
+    isGenerating,
+    hasVideoJobsInProgress,
     videoJobsInProgress: videoJobsInProgress.map(job => ({ id: job.job_id, status: job.status })),
     allJobs: jobs.map(job => ({ id: job.job_id, type: job.job_type, status: job.status }))
   });
@@ -263,7 +259,11 @@ function ProjectComponent() {
     generateVideo({ prompt, project_id: params.projectId })
   }
 
-
+  // Mock project data for now
+  const project = {
+    name: `Project ${params.projectId}`,
+    project_id: params.projectId
+  };
 
   // Show loading state
   // if (isLoading) {
@@ -324,7 +324,7 @@ function ProjectComponent() {
           {/* <AppSidebar /> */}
           <SidebarInset className="flex-1 overflow-y-auto">
             <div className="w-full">
-              <Editor assetUrl={assetUrl} videos={videosWithUrls} isGenerating={!!isGenerating} />
+              <Editor assetUrl={assetUrl} videos={videosWithUrls} isGenerating={isGenerating} />
               
               {/* Remove the duplicate loading animation since we're using isGenerating in the video grid */}
               

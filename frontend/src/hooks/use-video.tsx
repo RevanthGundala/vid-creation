@@ -28,7 +28,6 @@ interface GenerateVideoOptions {
 export function useVideo(options?: GenerateVideoOptions) {
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
     const [jobCreationTime, setJobCreationTime] = useState<number | null>(null);
-    const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const generateVideoMutation = $api.useMutation("post", "/api/jobs", {
         onMutate: () => {
@@ -62,71 +61,29 @@ export function useVideo(options?: GenerateVideoOptions) {
     // Use job status hook to track the current job
     const jobStatus = useJobStatus({
         jobId: currentJobId || "",
+        onStatusChange: (status) => {
+            if (status === "connected") {
+                toast.success("Video generation completed!");
+                // We only show a toast when the webhook connects successfully
+            }
+        },
         onComplete: (result) => {
             console.log("Job completed:", result);
             options?.onJobComplete?.(result);
             toast.success("Video generation completed!");
-            // Add a small delay before resetting to prevent flash
-            setTimeout(() => {
-                setCurrentJobId(null);
-                setJobCreationTime(null);
-            }, 100);
+            setCurrentJobId(null);
+            setJobCreationTime(null);
         },
         onError: (error) => {
             console.error("Job failed:", error);
             options?.onJobError?.(error);
             toast.error(`Video generation failed: ${error}`);
-            // Add a small delay before resetting to prevent flash
-            setTimeout(() => {
-                setCurrentJobId(null);
-                setJobCreationTime(null);
-            }, 100);
+            // Clear the current job immediately when failed
+            setCurrentJobId(null);
+            setJobCreationTime(null);
         },
     });
 
-    // More intelligent job cleanup logic
-    useEffect(() => {
-        if (currentJobId) {
-            // Clear any existing timeout
-            if (clearTimeoutRef.current) {
-                clearTimeout(clearTimeoutRef.current);
-                clearTimeoutRef.current = null;
-            }
-
-            // If we have a job status, handle completion/failure
-            if (jobStatus?.jobStatus) {
-                if (["completed", "failed"].includes(jobStatus.jobStatus.status)) {
-                    console.log(`Job ${currentJobId} is ${jobStatus.jobStatus.status}, clearing currentJobId`);
-                    setCurrentJobId(null);
-                    setJobCreationTime(null);
-                }
-            } else if (jobStatus.error) {
-                // Only clear if there's an actual error (job doesn't exist)
-                console.log(`Job ${currentJobId} has error, clearing currentJobId:`, jobStatus.error);
-                setCurrentJobId(null);
-                setJobCreationTime(null);
-            } else if (jobCreationTime) {
-                // Give the job some time to become available (10 seconds)
-                const timeElapsed = Date.now() - jobCreationTime;
-                const maxWaitTime = 10000; // 10 seconds
-                
-                if (timeElapsed > maxWaitTime) {
-                    console.log(`Job ${currentJobId} not found after ${maxWaitTime}ms, clearing currentJobId`);
-                    clearTimeoutRef.current = setTimeout(() => {
-                        setCurrentJobId(null);
-                        setJobCreationTime(null);
-                    }, 1000);
-                }
-            }
-        }
-
-        return () => {
-            if (clearTimeoutRef.current) {
-                clearTimeout(clearTimeoutRef.current);
-                clearTimeoutRef.current = null;
-            }
-        };
-    }, [currentJobId, jobStatus?.jobStatus, jobStatus.error, jobCreationTime]);
 
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
@@ -166,13 +123,15 @@ export function useVideo(options?: GenerateVideoOptions) {
     // Show generating if:
     // 1. Mutation is pending, OR
     // 2. We have a currentJobId and either:
-    //    - No job status yet (still loading/waiting for job to be available), OR  
+    //    - Job status is loading (initial fetch), OR
     //    - Job status shows queued/processing
-    const isGenerating = generateVideoMutation.isPending || 
+    const isGeneratingRaw = generateVideoMutation.isPending ||
         (currentJobId && (
-            !jobStatus?.jobStatus?.status || // No status yet (job might not be queryable yet)
-            ["queued", "processing"].includes(jobStatus.jobStatus.status)
+            jobStatus.isLoading || // Show loading while fetching job status
+            (jobStatus?.jobStatus?.status &&
+             ["queued", "processing"].includes(jobStatus.jobStatus.status))
         ) && (!options?.projectId || !jobStatus?.jobStatus?.project_id || jobStatus.jobStatus.project_id === options.projectId));
+  const isGenerating = Boolean(isGeneratingRaw);
     
     console.log('🔍 useVideo debug:', {
         generateVideoMutationIsPending: generateVideoMutation.isPending,

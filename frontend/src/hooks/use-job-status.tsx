@@ -73,42 +73,7 @@ export function useJobStatus({
     }
   );
 
-  // Handle success and error callbacks
-  useEffect(() => {
-    if (jobStatus) {
-      // Reset error flag on success
-      hasShownError.current = false;
-      onStatusChangeRef.current?.(jobStatus.status);
 
-      // Handle completion
-      if (jobStatus.status === "completed" && onCompleteRef.current) {
-        onCompleteRef.current(jobStatus.result);
-        // Invalidate related queries when job completes
-        queryClient.invalidateQueries({
-          queryKey: ['get', '/api/jobs']
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['get', '/api/jobs/{job_id}/asset-url', { params: { path: { job_id: jobId } } }]
-        });
-      }
-
-      // Handle errors
-      if (jobStatus.status === "failed" && onErrorRef.current) {
-        onErrorRef.current(jobStatus.error || "Job failed");
-      }
-    }
-  }, [jobStatus, queryClient, jobId]);
-
-  // Handle query errors
-  useEffect(() => {
-    if (error && !hasShownError.current) {
-      hasShownError.current = true;
-      const errorMessage = Array.isArray(error.detail) 
-        ? error.detail[0]?.msg || "Failed to fetch job status"
-        : "Failed to fetch job status";
-      toast.error(errorMessage);
-    }
-  }, [error]);
 
   // Webhook connection for real-time updates
   useEffect(() => {
@@ -123,6 +88,8 @@ export function useJobStatus({
           console.log(`Webhook connected for job ${jobId}`);
           setIsWebhookConnected(true);
           setLastWebhookActivity(Date.now());
+          // Notify about webhook connection if consumer cares
+          onStatusChangeRef.current?.('connected');
         };
 
         eventSource.onmessage = (event) => {
@@ -132,8 +99,14 @@ export function useJobStatus({
             setLastWebhookActivity(Date.now());
             
             // Skip connection/heartbeat messages that don't have job status
-            if (data.type === 'connected' || !data.status) {
-              console.log('Skipping non-status webhook message:', data);
+            // Skip initial connection/heartbeat messages that don't contain a status
+            if (data.type === 'connected' && !data.status) {
+              console.log('Skipping connection handshake message:', data);
+              return;
+            }
+            // Ignore any message that still lacks a status field
+            if (!data.status) {
+              console.log('Skipping message without status field:', data);
               return;
             }
             
@@ -199,9 +172,27 @@ export function useJobStatus({
     };
   }, [jobId, enableWebhook, queryClient, refetch]);
 
+  // Effect to handle status changes received via polling (when webhook is not used/available)
+  // useEffect(() => {
+  //   if (!jobStatus) return;
+
+  //   // Always notify status change
+  //   onStatusChangeRef.current?.(jobStatus.status);
+
+  //   if (jobStatus.status === "completed") {
+  //     onCompleteRef.current?.(jobStatus.result);
+  //   }
+
+  //   if (jobStatus.status === "failed") {
+  //     const errMsg = jobStatus.error || "Job failed";
+  //     onErrorRef.current?.(errMsg);
+  //   }
+  //   // We intentionally only run this effect when jobStatus changes
+  // }, [jobStatus]);
+
   return {
     jobStatus,
-    error: error ? (Array.isArray(error.detail) 
+    error: error ? (Array.isArray(error.detail)
       ? error.detail[0]?.msg || "Failed to fetch job status"
       : "Failed to fetch job status") : null,
     isLoading,

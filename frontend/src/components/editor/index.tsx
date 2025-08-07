@@ -7,7 +7,7 @@ interface EditorProps {
     url?: string;
     title?: string;
   }>;
-  isGenerating?: boolean;
+  isGenerating?: boolean | null;
 }
 
 export function Editor({ assetUrl, videos = [], isGenerating = false }: EditorProps) {

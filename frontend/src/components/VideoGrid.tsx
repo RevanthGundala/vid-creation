@@ -60,7 +60,7 @@ export function VideoGrid({ videos, columns = 3, isGenerating = false }: VideoGr
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
                 <p className="text-blue-600 font-semibold">Generating Video...</p>
-                <p className="text-gray-500 text-sm mt-2">This may take a few minutes</p>
+                <p className="text-gray-500 text-sm mt-2">This may take a few seconds</p>
               </div>
             </div>
           </div>

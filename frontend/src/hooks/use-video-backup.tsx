@@ -75,24 +75,7 @@ export function useVideo(options?: GenerateVideoOptions) {
         },
     });
 
-    // Clear currentJobId if the job is completed, failed, or doesn't exist
-    useEffect(() => {
-        if (currentJobId) {
-            // If job status is undefined, the job might not exist
-            if (!jobStatus?.jobStatus) {
-                console.log(`Job ${currentJobId} status is undefined, clearing currentJobId`);
-                setCurrentJobId(null);
-                return;
-            }
-            
-            // If job is completed or failed, clear the currentJobId
-            if (jobStatus.jobStatus.status && 
-                ["completed", "failed"].includes(jobStatus.jobStatus.status)) {
-                console.log(`Job ${currentJobId} is ${jobStatus.jobStatus.status}, clearing currentJobId`);
-                setCurrentJobId(null);
-            }
-        }
-    }, [currentJobId, jobStatus?.jobStatus]);
+
 
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
