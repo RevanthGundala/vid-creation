@@ -7,6 +7,7 @@ from typing import Dict, Any
 from src.repositories.base import FileStorageRepository
 from src.services.job_service import JobService
 from src.schemas.job import JobType, JobUpdate, JobStatus
+from src.config import config
 import replicate
 
 logger = logging.getLogger(__name__)
@@ -107,7 +108,7 @@ class JobProcessor:
             # TODO: Customize the video generation parameters
             if os.getenv("REPLICATE_API_TOKEN"):
                 output = replicate.run(
-                    os.getenv("REPLICATE_API_TOKEN"),
+                    config.REPLICATE_VIDEO_MODEL_ID,  # Use the model ID from config
                     input={
                         "prompt": prompt,
                         "go_fast": True,
