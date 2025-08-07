@@ -126,7 +126,7 @@ export function useVideo(options?: GenerateVideoOptions) {
                 clearTimeoutRef.current = null;
             }
         };
-    }, [currentJobId, jobStatus?.jobStatus, jobStatus.error, jobCreationTime]);
+    }, [currentJobId, jobStatus?.jobStatus?.status, jobStatus.error, jobCreationTime]);
 
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
