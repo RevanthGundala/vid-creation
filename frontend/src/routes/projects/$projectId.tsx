@@ -236,6 +236,7 @@ function ProjectComponent() {
 
 
   const { generateVideo, isGenerating: useVideoIsGenerating } = useVideo({
+    projectId: params.projectId, // Pass the current project ID
     onSuccess: () => {
       // Refetch jobs after starting generation to get the new job
       setTimeout(() => refetch(), 1000)

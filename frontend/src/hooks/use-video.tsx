@@ -1,7 +1,7 @@
 import { $api } from "../hooks";
 import { toast } from "sonner";
 import { useJobStatus } from "./use-job-status";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { components } from "../types/api";
 
 type JobCreate = components["schemas"]["JobCreate"];
@@ -22,6 +22,7 @@ interface GenerateVideoOptions {
     onError?: (error: any) => void;
     onJobComplete?: (result: any) => void;
     onJobError?: (error: any) => void;
+    projectId?: string; // Add projectId to make the hook project-aware
 }
 
 export function useVideo(options?: GenerateVideoOptions) {
@@ -74,6 +75,15 @@ export function useVideo(options?: GenerateVideoOptions) {
         },
     });
 
+    // Clear currentJobId if the job is completed or failed
+    useEffect(() => {
+        if (currentJobId && jobStatus?.jobStatus?.status && 
+            ["completed", "failed"].includes(jobStatus.jobStatus.status)) {
+            console.log(`Job ${currentJobId} is ${jobStatus.jobStatus.status}, clearing currentJobId`);
+            setCurrentJobId(null);
+        }
+    }, [currentJobId, jobStatus?.jobStatus?.status]);
+
     const generateVideo = async ({ prompt, project_id }: GenerateVideoRequest) => {
         try {
             console.log('🚀 generateVideo called with:', { prompt, project_id });
@@ -109,14 +119,18 @@ export function useVideo(options?: GenerateVideoOptions) {
         }
     };
 
+    // Only show generating if we have a valid job status for the current project
     const isGenerating = generateVideoMutation.isPending || 
-        (currentJobId && jobStatus?.jobStatus?.status && ["queued", "processing"].includes(jobStatus.jobStatus.status)) ||
-        (currentJobId && !jobStatus?.jobStatus?.status); // Keep loading while job status is being fetched
+        (currentJobId && jobStatus?.jobStatus && 
+         ["queued", "processing"].includes(jobStatus.jobStatus.status) && 
+         (!options?.projectId || jobStatus.jobStatus.project_id === options.projectId));
     
     console.log('🔍 useVideo debug:', {
         generateVideoMutationIsPending: generateVideoMutation.isPending,
         currentJobId,
         jobStatusStatus: jobStatus?.jobStatus?.status,
+        jobStatusProjectId: jobStatus?.jobStatus?.project_id,
+        expectedProjectId: options?.projectId,
         isGenerating
     });
 
