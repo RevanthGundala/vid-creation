@@ -4,7 +4,7 @@ import { SHARED_PROJECT_ID } from '../config/shared-project';
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
     // Redirect ALL users to the shared project
-    throw redirect({ to: `/_auth/projects/${SHARED_PROJECT_ID}` });
+          throw redirect({ to: `/projects/${SHARED_PROJECT_ID}` });
   },
   component: LandingPage,
 });

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useQueryClient } from '@tanstack/react-query'
 
-export const Route = createFileRoute('/_auth/projects/$projectId')({
+export const Route = createFileRoute('/projects/$projectId')({
   component: ProjectComponent,
 })
 
