@@ -235,23 +235,36 @@ function ProjectComponent() {
 
 
 
+  const [localGeneratingState, setLocalGeneratingState] = useState(false);
+
   const { generateVideo, isGenerating: useVideoIsGenerating } = useVideo({
     projectId: params.projectId, // Pass the current project ID
     onSuccess: () => {
+      // Set local generating state to true when generation starts
+      setLocalGeneratingState(true);
       // Refetch jobs after starting generation to get the new job
       setTimeout(() => refetch(), 1000)
     },
     onError: () => {
       // Video generation error handled silently
+      setLocalGeneratingState(false);
     }
   })
 
-  // Show loading immediately when mutation starts, and continue while jobs are in progress
-  const isGenerating = useVideoIsGenerating || hasVideoJobsInProgress;
+  // Clear local generating state when we have video jobs in progress
+  useEffect(() => {
+    if (hasVideoJobsInProgress) {
+      setLocalGeneratingState(false);
+    }
+  }, [hasVideoJobsInProgress]);
+
+  // Show loading when mutation is pending OR we have local generating state OR jobs are in progress
+  const isGenerating = useVideoIsGenerating || localGeneratingState || hasVideoJobsInProgress;
   
   console.log('🎬 Project detail debug:', {
-    isGenerating: isGenerating, // Combined: mutation pending OR jobs in progress
+    isGenerating: isGenerating, // Combined: mutation pending OR local state OR jobs in progress
     useVideoIsGenerating, // From useVideo hook (mutation pending)
+    localGeneratingState, // Local state to bridge the gap
     hasVideoJobsInProgress, // From jobs array (jobs in progress)
     videoJobsInProgress: videoJobsInProgress.map(job => ({ id: job.job_id, status: job.status })),
     allJobs: jobs.map(job => ({ id: job.job_id, type: job.job_type, status: job.status }))
