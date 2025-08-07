@@ -137,7 +137,7 @@ class JobProcessor:
                 # Clear the output variable to prevent any accidental storage
                 del output
             else: 
-                replicate_video_url = "https://replicate.delivery/xezq/HAevwZ966eiJxkd7jByCStY9jALtnraJ8z6bNsnJV9GXiGIVA/output.mp4"
+                replicate_video_url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                 logger.info(f"Using placeholder URL: {replicate_video_url}")
 
             response = requests.get(replicate_video_url)
