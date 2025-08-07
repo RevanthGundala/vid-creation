@@ -259,11 +259,7 @@ function ProjectComponent() {
     generateVideo({ prompt, project_id: params.projectId })
   }
 
-  // Mock project data for now
-  // const project = {
-  //   name: `Project ${params.projectId}`,
-  //   project_id: params.projectId
-  // };
+
 
   // Show loading state
   // if (isLoading) {

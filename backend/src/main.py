@@ -54,9 +54,12 @@ app = FastAPI(lifespan=lifespan)
 app.middleware("http")(logging_middleware)
 
 # Build CORS origins list
-cors_origins = ["http://localhost:3000"]
+cors_origins = [
+    "http://localhost:3000",
+    "https://vid-creation.onrender.com",  # Production frontend
+]
 frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
+if frontend_url and frontend_url not in cors_origins:
     cors_origins.append(frontend_url)
 
 app.add_middleware(

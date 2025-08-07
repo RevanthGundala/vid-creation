@@ -17,7 +17,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootComponent() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="w-screen h-screen overflow-hidden">
         <main className="w-full h-full">
           <Outlet />
