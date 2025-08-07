@@ -41,6 +41,14 @@ const mockProjects: Record<string, Project> = {
     created_at: "2024-01-03T00:00:00Z",
     modified_at: "2024-01-03T00:00:00Z",
   },
+  // Add the shared project
+  "shared-test-project-123": {
+    project_id: "shared-test-project-123",
+    user_id: "mock-user-id",
+    name: "Shared Test Project",
+    created_at: "2024-01-01T00:00:00Z",
+    modified_at: "2024-01-01T00:00:00Z",
+  },
 };
 
 export function useProject(projectId: string, options: UseProjectOptions = {}) {

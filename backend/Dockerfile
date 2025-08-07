@@ -1,24 +1,46 @@
+# Use a more specific base image for better caching
 FROM python:3.11-slim as builder
 
-WORKDIR /app
-COPY pyproject.toml uv.lock ./
-RUN pip install uv
-# Install dependencies globally using uv pip install
-RUN uv pip install --system .
+# Install system dependencies needed for building wheels in a single layer
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install uv
 
+WORKDIR /app
+
+# Copy dependency files first for better layer caching
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies with better caching and parallel processing
+RUN uv pip install --system --no-cache . --no-deps && \
+    uv pip install --system --no-cache .
+
+# Copy source code
 COPY ./src ./src
 
+# Production stage
 FROM python:3.11-slim
 
+# Install runtime dependencies only in a single layer
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home appuser
+
 WORKDIR /app
-# This COPY command will now work correctly
+
+# Copy only necessary files from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app/src ./src
+
 # Copy assets directory
 COPY ./assets ./assets
 
-RUN useradd --create-home appuser
+# Switch to non-root user
 USER appuser
 
 EXPOSE 8080

@@ -3,7 +3,6 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
-import { AuthProvider, useAuth } from './contexts/auth-context'
 
 // This will be populated by the router instance
 declare module '@tanstack/react-router' {
@@ -23,33 +22,17 @@ const queryClient = new QueryClient({
   },
 })
 
-// Create a component that provides the auth context to the router
-function InnerApp() {
-  const auth = useAuth();
-  
-  const router = createRouter({
-    routeTree,
-    defaultPreload: 'intent',
-    scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-    context: {
-      auth: {
-        user: auth.user,
-        isAuthenticated: auth.isAuthenticated,
-        isLoading: auth.isLoading,
-      },
-    },
-  })
-
-  return <RouterProvider router={router} />
-}
+const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  scrollRestoration: true,
+  defaultPreloadStaleTime: 0,
+})
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <InnerApp />
-      </AuthProvider>
+      <RouterProvider router={router} />
     </QueryClientProvider>
   )
 }

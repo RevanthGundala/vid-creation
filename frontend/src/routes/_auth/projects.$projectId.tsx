@@ -22,7 +22,7 @@ function ProjectComponent() {
   const [lastJobCount, setLastJobCount] = useState(0)
 
   // Use the useProject hook instead of local state and fetchProject
-  const { error, jobs, refetch } = useProject(params.projectId, {
+  const { project, error, jobs, refetch } = useProject(params.projectId, {
     onSuccess: () => {
       // Project loaded successfully
     },
@@ -260,10 +260,10 @@ function ProjectComponent() {
   }
 
   // Mock project data for now
-  const project = {
-    name: `Project ${params.projectId}`,
-    project_id: params.projectId
-  };
+  // const project = {
+  //   name: `Project ${params.projectId}`,
+  //   project_id: params.projectId
+  // };
 
   // Show loading state
   // if (isLoading) {

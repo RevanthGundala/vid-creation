@@ -33,3 +33,16 @@ async def get_current_user_from_cookie(
     Use this for cookie-based authentication.
     """
     return await auth_service.get_current_user_from_cookie(request, user_repo)
+
+async def get_mock_user() -> User:
+    """
+    Dependency that returns a mock user for development purposes.
+    This bypasses authentication requirements.
+    """
+    return User(
+        user_id="mock-user-id",
+        email="mock@example.com",
+        first_name="Mock",
+        last_name="User",
+        profile_picture_url=None
+    )

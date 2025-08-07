@@ -6,7 +6,6 @@ from src.repositories.gcp_repository import GCPFirestoreRepository, GCPFileStora
 from src.services.job_processor import JobProcessor
 from src.api.webhooks import router as webhook_router
 from fastapi.middleware.cors import CORSMiddleware
-from src.api.auth import router as auth_router
 from src.api.middleware import logging_middleware
 import dotenv
 from src.services.auth_service import AuthService
@@ -40,7 +39,7 @@ async def lifespan(app: FastAPI):
         print(f"🔍 Using default Google credentials")
     
     # Initialize services using environment variables directly
-    app.state.auth_service = AuthService()
+    app.state.auth_service = AuthService()  # Still needed for dependencies
     app.state.user_repo = GCPFirestoreRepository(config.USER_COLLECTION_NAME)
     app.state.job_repo = GCPFirestoreRepository(config.JOB_COLLECTION_NAME)
     app.state.file_storage = GCPFileStorageRepository(os.getenv("GCP_STORAGE_BUCKET"))
@@ -70,7 +69,6 @@ app.add_middleware(
 
 
 
-app.include_router(auth_router)
 app.include_router(webhook_router)
 app.include_router(job_router)
 

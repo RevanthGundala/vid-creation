@@ -31,10 +31,21 @@ export function useVideo(options?: GenerateVideoOptions) {
         onMutate: () => {
         },
         onSuccess: (data: Job) => { // Changed to Job type
-            // The backend returns job_id, not project_id
-            setCurrentJobId(data.job_id);
-            options?.onSuccess?.(data);
-            toast.success("Video generation started!");
+            // Add debugging to see what we're getting
+            console.log("🎯 onSuccess called with data:", data);
+            console.log("🎯 data type:", typeof data);
+            console.log("🎯 data.job_id:", data?.job_id);
+            
+            // Add null checks to prevent TypeError
+            if (data && data.job_id) {
+                setCurrentJobId(data.job_id);
+                options?.onSuccess?.(data);
+                toast.success("Video generation started!");
+            } else {
+                console.error("❌ Invalid response data:", data);
+                options?.onError?.("Invalid response from server");
+                toast.error("Failed to start video generation - Invalid response");
+            }
         },
         onError: (error) => {
             console.error("❌ Failed to create job:", error);
