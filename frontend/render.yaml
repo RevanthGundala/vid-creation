@@ -9,5 +9,7 @@ services:
         value: https://vid-creation-api.onrender.com
     routes:
       - type: rewrite
-        source: /*
-        destination: /index.html
+        source: "/*"
+        destination: "/index.html"
+        headers:
+          Cache-Control: "no-cache"

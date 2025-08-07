@@ -235,7 +235,7 @@ function ProjectComponent() {
 
 
 
-  const { generateVideo, isGenerating } = useVideo({
+  const { generateVideo, isGenerating: useVideoIsGenerating } = useVideo({
     onSuccess: () => {
       // Refetch jobs after starting generation to get the new job
       setTimeout(() => refetch(), 1000)
@@ -245,8 +245,12 @@ function ProjectComponent() {
     }
   })
 
+  // Use project jobs as the single source of truth for loading states
+  const isGenerating = hasVideoJobsInProgress;
+  
   console.log('🎬 Project detail debug:', {
-    isGenerating: isGenerating, // From useVideo hook
+    isGenerating: isGenerating, // From jobs array (single source of truth)
+    useVideoIsGenerating, // From useVideo hook (for comparison)
     hasVideoJobsInProgress, // From jobs array
     videoJobsInProgress: videoJobsInProgress.map(job => ({ id: job.job_id, status: job.status })),
     allJobs: jobs.map(job => ({ id: job.job_id, type: job.job_type, status: job.status }))
